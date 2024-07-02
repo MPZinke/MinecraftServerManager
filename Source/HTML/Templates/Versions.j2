@@ -1,0 +1,33 @@
+<html>
+	<title>
+		Versions
+	</title>
+	<h1>
+		Versions
+	</h1>
+	<table>
+		<thead>
+			<tr>
+				<th>
+					Tag
+				</th>
+				<th>
+					Released
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				{% for version in versions %}
+					<td>
+						{{ version["tag"] }}
+					</td>
+					<td>
+						{{ version["released"] }}
+					</td>
+				{% endfor %}
+			</tr>
+		</tbody>
+
+	</table>
+</html>

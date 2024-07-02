@@ -1,0 +1,98 @@
+
+{% extends "Header.j2" %}
+{% block body %}
+	<form
+	  method="POST"
+	>
+		<table
+		  class="table table-dark table-striped"
+		>
+			<tbody>
+				<tr>
+					<td>
+						Title
+					</td>
+					<td>
+						<input
+						  class="form-control"
+						  name="title"
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Location
+					</td>
+					<td>
+						<input
+						  class="form-control"
+						  name="location1"
+						/>
+						<input
+						  class="form-control"
+						  name="location2"
+						/>
+						<input
+						  class="form-control"
+						  name="location3"
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Biomes.id
+					</td>
+					<td>
+						<select
+						  class="form-control"
+						  name="Biomes.id"
+						>
+							<option
+							  value=""
+							  selected
+							>
+							</option>
+							{% for id, title in biomes.items() %}
+								<option
+								  value="{{ id }}"
+								>
+									{{ title }}
+								</option>
+							{% endfor %}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Notes
+					</td>
+					<td>
+						<textarea
+						  class="form-control"
+						  name="notes"
+						></textarea>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<button
+		  type="submit"
+		  class="btn btn-primary"
+		>
+			Add
+		</button>
+	</form>
+
+	<div>
+		<a
+		  href="/locations"
+		>
+			<button
+			  type="button"
+			  class="btn btn-success"
+			>
+				Locations
+			</button>
+		</a>
+	</div>
+{% endblock %}

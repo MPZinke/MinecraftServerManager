@@ -1,0 +1,74 @@
+<html>
+	<title>
+		Worlds
+	</title>
+	<h1>
+		Worlds
+	</h1>
+	<table>
+		<thead>
+			<tr>
+				<th>
+					ID
+				</th>
+				<th>
+					Created
+				</th>
+				<th>
+					Name
+				</th>
+				<th>
+					Notes
+				</th>
+				<th>
+					Last Played
+				</th>
+				<th>
+					Container Name
+				</th>
+				<th>
+					Image Tag
+				</th>
+				<th>
+					Is Running
+				</th>
+				<th>
+					Mapped Port
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for world in worlds %}
+				<tr>
+					<td>
+						{{ world["id"] }}
+					</td>
+					<td>
+						{{ world["created"] }}
+					</td>
+					<td>
+						{{ world["name"] }}
+					</td>
+					<td>
+						{{ world["notes"] }}
+					</td>
+					<td>
+						{{ world["last_played"] }}
+					</td>
+					<td>
+						{{ world["container_name"] }}
+					</td>
+					<td>
+						{{ world["image_tag"] }}
+					</td>
+					<td>
+						{{ world["is_running"] }}
+					</td>
+					<td>
+						{{ world["mapped_port"] }}
+					</td>
+				</tr>		
+			{% endfor %}
+		</tbody>
+	</table>
+</html>

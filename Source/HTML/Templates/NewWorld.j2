@@ -1,0 +1,67 @@
+<html>
+
+	<body>
+		<form
+			method="POST"
+		>
+			<table
+			>
+				<tbody>
+					<tr>
+						<td>
+							Name
+						</td>
+						<td>
+							<input
+								name="name"
+							/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Version
+						</td>
+						<td>
+							<select
+								name="version_id"
+							>
+								{% for version in versions %}
+									<option value="{{ version["id"] }}">
+										{{ version["tag"] }}
+									</option>
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Notes
+						</td>
+						<td>
+							<input
+								name="notes"
+							/>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<button
+				type="submit"
+			>
+				Add
+			</button>
+		</form>
+
+		<div>
+			<a
+				href="/worlds"
+			>
+				<button
+					type="button"
+				>
+					Worlds
+				</button>
+			</a>
+		</div>
+	</body>
+</html>
