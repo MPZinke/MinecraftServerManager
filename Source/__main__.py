@@ -13,8 +13,7 @@ from flask import redirect, render_template, request, Flask
 
 from database.queries.new import new_version, new_world
 from database.queries.get import get_versions, get_worlds
-import world_actions
-
+from server_processes import start_server
 
 
 ROOT_DIR = str(Path(__file__).absolute().parent)
@@ -86,7 +85,7 @@ def worlds_new_POST():
 
 @app.route('/worlds/start/<int:world_id>', methods=['GET'])
 def worlds_start_POST(world_id: int):
-	world_actions.start_world(world_id)
+	start_server(world_id)
 
 	return redirect("/worlds")
 

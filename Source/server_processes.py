@@ -37,7 +37,7 @@ def decompress_folder(compressed_folder: bytes, folder: str) -> None:
 		tar_file.extractall(folder)
 
 
-def start_world(world_id: int) -> None:
+def start_server(world_id: int) -> None:
 	world = get_world(world_id)
 	version = get_version(world["Versions.id"])
 
@@ -46,10 +46,9 @@ def start_world(world_id: int) -> None:
 		shutil.rmtree(temp_folder)
 	os.mkdir(temp_folder)
 
-	# with open(temp_folder+"/Dockerfile", "wb") as file:
-	# 	file.write(dockerfile_file)
 	decompress_folder(world["data"], temp_folder)
 	server_file = version["jar"]
+
 	with open(temp_folder+"/server.jar", "wb") as file:
 		file.write(server_file)
 
