@@ -13,7 +13,7 @@ from flask import redirect, render_template, request, Flask
 
 from database.queries.new import new_version, new_world
 from database.queries.get import get_versions, get_worlds
-from server_processes import start_server
+from server_processes import start_server, stop_server
 
 
 ROOT_DIR = str(Path(__file__).absolute().parent)
@@ -53,8 +53,6 @@ def versions_new_POST():
 	tag = request.form["tag"]
 	released = datetime.strptime(request.form["released"], "%Y-%m-%d")
 	file_data = request.files['file'].read()
-	# print(type(file_data))
-	# compressed_file = compress_file(file_data)
 
 	new_version(file_data, released, tag)
 
@@ -86,6 +84,13 @@ def worlds_new_POST():
 @app.route('/worlds/start/<int:world_id>', methods=['GET'])
 def worlds_start_POST(world_id: int):
 	start_server(world_id)
+
+	return redirect("/worlds")
+
+
+@app.route('/worlds/stop/<int:world_id>', methods=['GET'])
+def worlds_stop_POST(world_id: int):
+	stop_server(world_id)
 
 	return redirect("/worlds")
 

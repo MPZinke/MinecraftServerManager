@@ -34,6 +34,10 @@ CREATE TABLE "Worlds"
 );
 
 
+CREATE UNIQUE INDEX ON "Worlds"("mapped_port")
+  WHERE "mapped_port" IS NOT NULL;
+
+
 DROP TABLE IF EXISTS "Biomes" CASCADE;
 CREATE TABLE "Biomes"
 (
