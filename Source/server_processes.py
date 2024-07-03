@@ -2,10 +2,10 @@
 
 from io import BytesIO
 import os
+import requests
 import shutil
 import socket
 import tarfile
-import gzip
 
 
 import docker
@@ -15,7 +15,7 @@ from database.queries import get_version, get_world, update_running_world, updat
 
 
 def setup_build_folder(world: dict, version: dict) -> str:
-	build_folder = "/tmp/minecraft_build"
+	build_folder = f"""/tmp/minecraft_build-{world["id"]}"""
 
 	if(os.path.exists(build_folder)):
 		shutil.rmtree(build_folder)
@@ -23,7 +23,7 @@ def setup_build_folder(world: dict, version: dict) -> str:
 	os.mkdir(build_folder)
 
 	write_dockerfile(build_folder)
-	write_server_jar(build_folder, version)
+	download_server_jar(build_folder, version)
 	write_world_data(build_folder, world["data"])
 
 	return build_folder
@@ -41,14 +41,15 @@ def write_dockerfile(build_folder: str) -> None:
 		)
 
 
-def write_server_jar(build_folder: str, version: dict) -> None:
+def download_server_jar(build_folder: str, version: dict) -> None:
+	response: requests.Response = requests.get(version["url"], stream=True, timeout=21)
 	with open(os.path.join(build_folder, "server.jar"), "wb") as file:
-		file.write(version["jar"])
+		for chunk in response.iter_content(chunk_size=1024):
+			file.write(chunk)
 
 
 def write_world_data(build_folder: str, world_data: bytes) -> None:
 	world_data_file = BytesIO(world_data)
-	# with tarfile.open(fileobj=world_data_file, mode="r") as tar_file:
 	with tarfile.open(fileobj=world_data_file, mode="r:gz") as tar_file:
 		tar_file.extractall(build_folder)
 
@@ -72,7 +73,7 @@ def decompress_file(compressed_file: bytes) -> bytes:
 
 def get_available_port() -> int:
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		if(s.connect_ex(('localhost', 25565)) == 0):
+		if(s.connect_ex(('', 25565)) != 0):
 			return 25565
 
 	# FROM: https://stackoverflow.com/a/1365284
@@ -102,12 +103,13 @@ def stop_server(world_id: int):
 
 	client = docker.from_env()
 	container = client.containers.get(world["container_name"])
-	container.pause()
-	data, _ = container.get_archive("/usr/app")
-	data = b"".join(data)
-	data = compress_world_data(data)
+	if(container.status != "paused"):
+		container.pause()
 
-	update_stopped_world(world_id, data)
+	data = b"".join(container.get_archive("/usr/app")[0])
+	compressed_data = compress_world_data(data)
+
+	update_stopped_world(world_id, compressed_data)
 	container.kill()
 	container.remove()
 	client.images.remove(world["image_tag"])

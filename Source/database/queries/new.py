@@ -8,16 +8,16 @@ from typing import Optional
 from database.connect import connect
 
 
-@connect
-def new_version(cursor: psycopg2.extras.RealDictCursor, jar: bytes, released: datetime, tag: str) -> dict:
-	query = """
-		INSERT INTO "Versions" ("jar", "released", "tag") VALUES
-		(%s, %s, %s)
-		RETURNING *;
-	"""
+# @connect
+# def new_version(cursor: psycopg2.extras.RealDictCursor, jar: bytes, released: datetime, tag: str) -> dict:
+# 	query = """
+# 		INSERT INTO "Versions" ("jar", "released", "tag") VALUES
+# 		(%s, %s, %s)
+# 		RETURNING *;
+# 	"""
 
-	cursor.execute(query, (jar, released, tag))
-	return dict(cursor.fetchone())
+# 	cursor.execute(query, (jar, released, tag))
+# 	return dict(cursor.fetchone())
 
 
 @connect

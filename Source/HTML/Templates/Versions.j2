@@ -1,33 +1,61 @@
 <html>
+	<head>
+		<link rel="stylesheet" href="{{ url_for("static", filename="Style.css") }}">
+	</head>
+
 	<title>
 		Versions
 	</title>
-	<h1>
-		Versions
-	</h1>
-	<table>
-		<thead>
-			<tr>
-				<th>
-					Tag
-				</th>
-				<th>
-					Released
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				{% for version in versions %}
-					<td>
-						{{ version["tag"] }}
-					</td>
-					<td>
-						{{ version["released"] }}
-					</td>
-				{% endfor %}
-			</tr>
-		</tbody>
 
-	</table>
+
+	<body>
+		<h1>
+			Versions
+		</h1>
+		<a
+			href="/worlds"
+		>
+			<button>
+				Worlds
+			</button>
+		</a>
+		<a
+			href="/versions/new"
+		>
+			<button>
+				+ New Version
+			</button>
+		</a>
+
+		<table>
+			<thead>
+				<tr>
+					<th>
+						Tag
+					</th>
+					<th>
+						Title
+					</th>
+					<th>
+						Released
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for version in versions %}
+					<tr>
+						<td>
+							{{ version["tag"] }}
+						</td>
+						<td>
+							{{ version["title"] }}
+						</td>
+						<td>
+							{{ version["released"] }}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</body>
 </html>

@@ -1,33 +1,47 @@
 <html>
+	<head>
+		<link rel="stylesheet" href="{{ url_for("static", filename="Style.css") }}">
+	</head>
+
 	<title>
 		Worlds
 	</title>
 	<h1>
 		Worlds
 	</h1>
-	<table>
+	<a
+		href="/worlds/new"
+	>
+		<button>
+			+ New World
+		</button>
+	</a>
+	<a
+		href="/versions"
+	>
+		<button>
+			Versions
+		</button>
+	</a>
+	<table
+		class="boxed"
+	>
 		<thead>
 			<tr>
-				<th>
-					ID
-				</th>
-				<th>
-					Created
-				</th>
 				<th>
 					Name
 				</th>
 				<th>
-					Notes
+					Version
 				</th>
 				<th>
 					Last Played
 				</th>
 				<th>
-					Container Name
+					Created
 				</th>
 				<th>
-					Image Tag
+					Notes
 				</th>
 				<th>
 					Status
@@ -41,25 +55,19 @@
 			{% for world in worlds %}
 				<tr>
 					<td>
-						{{ world["id"] }}
-					</td>
-					<td>
-						{{ world["created"] }}
-					</td>
-					<td>
 						{{ world["name"] }}
 					</td>
 					<td>
-						{{ world["notes"] }}
+						{{ world["title"] }}
 					</td>
 					<td>
 						{{ world["last_played"] }}
 					</td>
 					<td>
-						{{ world["container_name"] }}
+						{{ world["created"] }}
 					</td>
 					<td>
-						{{ world["image_tag"] }}
+						{{ world["notes"] }}
 					</td>
 					<td>
 						{{ ["Stopped", "Running"][world["is_running"]] }}
@@ -73,8 +81,9 @@
 								href="/worlds/stop/{{ world["id"] }}"
 							>
 								<button
+									style="color: #D00000;"
 								>
-									Stop
+									⏹
 								</button>
 							</a>
 						{% else %}
@@ -82,8 +91,9 @@
 								href="/worlds/start/{{ world["id"] }}"
 							>
 								<button
+									style="color: #00D000;"
 								>
-									Start
+									▶
 								</button>
 							</a>
 						{% endif %}

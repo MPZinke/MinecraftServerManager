@@ -42,10 +42,35 @@ def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 
 
 @connect
+def get_world_data(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
+	query = """
+		SELECT "Worlds".*, "Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
+		FROM "Worlds"
+		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
+		WHERE "id" = %s;
+	"""
+
+	cursor.execute(query, (world_id,))
+	return dict(cursor.fetchone())
+
+
+@connect
 def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[dict]:
 	query = """
 		SELECT "id", "created", "name", "notes", "last_played", "container_name", "image_tag", "is_running", "mapped_port"
 		FROM "Worlds";
+	"""
+
+	cursor.execute(query)
+	return list(map(dict, cursor))
+
+
+@connect
+def get_worlds_data(cursor: psycopg2.extras.RealDictCursor) -> dict:
+	query = """
+		SELECT "Worlds".*, "Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
+		FROM "Worlds"
+		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
 	"""
 
 	cursor.execute(query)

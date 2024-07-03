@@ -1,51 +1,74 @@
 <html>
+	<head>
+		<link rel="stylesheet" href="{{ url_for("static", filename="Style.css") }}">
+	</head>
+
 	<title>
 		New Version
 	</title>
-	<h1>
-		Upload A New Version
-	</h1>
-	<form
-		method="post"
-		enctype="multipart/form-data"
-	>
-		<table>
-			<tr>
-				<td>
-					tag
-				</td>
-				<td>
-					<input
-						name="tag"
-					/>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					released
-				</td>
-				<td>
-					<input
-						type="date"
-						name="released"
-					/>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					file
-				</td>
-				<td>
-					<input
-						type="file"
-						name="file"
-					/>
-				</td>
-			</tr>
-		</table>
-		<input
-			type=submit
-			value=Upload
-		/>
-	</form>
+	<body>
+		<h1>
+			Upload A New Version
+		</h1>
+
+		<a
+			href="/versions"
+		>
+			<button>
+				Versions
+			</button>
+		</a>
+
+		<a
+			href="/worlds"
+		>
+			<button>
+				Worlds
+			</button>
+		</a>
+
+		<form
+			method="post"
+			enctype="multipart/form-data"
+		>
+			<table>
+				<tr>
+					<td>
+						tag
+					</td>
+					<td>
+						<input
+							name="tag"
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						released
+					</td>
+					<td>
+						<input
+							type="date"
+							name="released"
+						/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						file
+					</td>
+					<td>
+						<input
+							type="file"
+							name="file"
+						/>
+					</td>
+				</tr>
+			</table>
+			<input
+				type=submit
+				value=Upload
+			/>
+		</form>
+	</body>
 </html>
