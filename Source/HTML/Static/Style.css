@@ -35,17 +35,44 @@ a
 th
 {
 	color: var(--text-color);
+	padding: 16px;
+}
+
+tr:odd
+{
+	background-color: var(--background-accent-color);
 }
 
 td
 {
 	color: var(--text-color);
+	padding: 16px;
+	text-align: center;
+/*	border-left: solid 1px var(--text-color);*/
 }
 
 input
 {
 	background-color: var(--background-color);
 	color: var(--text-color);
+}
+
+button
+{
+	background-color: var(--background-color);
+	color: var(--text-color);
+	font-size: 20px;
+	padding: 8px;
+	border-radius: 5px;
+}
+
+select
+{
+	background-color: var(--background-color);
+	color: var(--text-color);
+	font-size: 20px;
+	padding: 8px;
+	border-radius: 5px;
 }
 
 .boxed
