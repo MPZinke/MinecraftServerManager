@@ -9,9 +9,6 @@ import subprocess
 import tarfile
 
 
-import docker
-
-
 from database.queries import get_version, get_world, update_running_world, update_stopped_world
 
 
@@ -90,8 +87,6 @@ def get_available_port() -> int:
 
 
 def start_server(world_id: int) -> None:
-	client = docker.from_env()
-
 	world = get_world(world_id)
 	version = get_version(world["Versions.id"])
 
