@@ -42,12 +42,15 @@ def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 
 
 @connect
-def get_world_data(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
+def get_world_display_data(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 	query = """
-		SELECT "Worlds".*, "Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
+		SELECT "Worlds"."id", "Worlds"."created", "Worlds"."name", "Worlds"."notes", "Worlds"."last_played",
+			"Worlds"."is_running", "Worlds"."mapped_port",
+			"Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
 		FROM "Worlds"
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
-		WHERE "id" = %s;
+		WHERE "id" = %s
+		ORDER BY "Worlds"."id" ASC;
 	"""
 
 	cursor.execute(query, (world_id,))
@@ -58,7 +61,8 @@ def get_world_data(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dic
 def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[dict]:
 	query = """
 		SELECT "id", "created", "name", "notes", "last_played", "container_name", "image_tag", "is_running", "mapped_port"
-		FROM "Worlds";
+		FROM "Worlds"
+		ORDER BY "id" ASC;
 	"""
 
 	cursor.execute(query)
@@ -66,11 +70,14 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[dict]:
 
 
 @connect
-def get_worlds_data(cursor: psycopg2.extras.RealDictCursor) -> dict:
+def get_worlds_display_data(cursor: psycopg2.extras.RealDictCursor) -> dict:
 	query = """
-		SELECT "Worlds".*, "Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
+		SELECT "Worlds"."id", "Worlds"."created", "Worlds"."name", "Worlds"."notes", "Worlds"."last_played",
+			"Worlds"."is_running", "Worlds"."mapped_port",
+			"Versions"."released", "Versions"."tag", "Versions"."title", "Versions"."url"
 		FROM "Worlds"
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
+		ORDER BY "Worlds"."id" ASC;
 	"""
 
 	cursor.execute(query)

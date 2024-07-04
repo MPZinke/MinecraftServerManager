@@ -5,6 +5,7 @@ import os
 import requests
 import shutil
 import socket
+import subprocess
 import tarfile
 
 
@@ -12,6 +13,11 @@ import docker
 
 
 from database.queries import get_version, get_world, update_running_world, update_stopped_world
+
+
+def run_output(command: list[str]) -> bytes:
+	process = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	return process.stdout
 
 
 def setup_build_folder(world: dict, version: dict) -> str:
@@ -33,7 +39,7 @@ def write_dockerfile(build_folder: str) -> None:
 	with open(os.path.join(build_folder, "Dockerfile"), "w") as file:
 		file.write(
 			"""FROM openjdk:24-slim\n"""
-			"""WORKDIR /usr/app\n"""
+			"""WORKDIR /usr/app/\n"""
 			"""COPY ./* ./\n"""
 			"""RUN rm Dockerfile\n"""
 			"""EXPOSE 25565\n"""
@@ -59,7 +65,8 @@ def compress_world_data(tar_data: bytes) -> bytes:
 	with tarfile.open(fileobj=compressed_bytes_file, mode="w:gz") as compressed_file:
 		with tarfile.open(fileobj=BytesIO(tar_data), mode="r") as tar_file:
 			for file in tar_file.getmembers():
-				compressed_file.addfile(file, tar_file.extractfile(file))
+				if(file.name not in ["app", "app/server.jar", "app/server.1.21.jar"]):
+					compressed_file.addfile(file, tar_file.extractfile(file))
 
 	compressed_bytes_file.seek(0)
 	return compressed_bytes_file.read()
@@ -88,28 +95,37 @@ def start_server(world_id: int) -> None:
 	world = get_world(world_id)
 	version = get_version(world["Versions.id"])
 
+	if(world["is_running"]):
+		#TODO: Check if the world is actually running
+		pass
+
 	build_folder: str = setup_build_folder(world, version)
-	client.images.build(path=build_folder, tag=world["image_tag"])
-	shutil.rmtree(build_folder)
+	subprocess.call(["docker", "build", "-t", world["image_tag"], build_folder])
+	# shutil.rmtree(build_folder)
 
 	port = get_available_port()
 	update_running_world(world_id, port)
 
-	client.containers.run(image=world["image_tag"], name=world["container_name"], ports={"25565/tcp": port}, detach=True)
+	subprocess.call(["docker", "run", "--detach", "--publish", f"25565:{port}", "--name", world["container_name"], world["image_tag"]])
 
 
 def stop_server(world_id: int):
 	world = get_world(world_id)
 
-	client = docker.from_env()
-	container = client.containers.get(world["container_name"])
-	if(container.status != "paused"):
-		container.pause()
+	if(not world["is_running"]):
+		#TODO: Check if the world is actually stopped
+		pass
 
-	data = b"".join(container.get_archive("/usr/app")[0])
+	container_id: str = run_output(["docker", "ps", "-aqf", f"""name=^{world["container_name"]}$"""]).decode().strip()
+	status = run_output(["docker", "ps", "--filter", f"id={container_id}", "--format", "{{.State}}"]).decode().strip()
+
+	if(status != "paused"):
+		subprocess.call(["docker", "pause", world["container_name"]])
+
+	data: bytes = run_output(["docker", "cp", f"{container_id}:/usr/app", "-"])
 	compressed_data = compress_world_data(data)
-
 	update_stopped_world(world_id, compressed_data)
-	container.kill()
-	container.remove()
-	client.images.remove(world["image_tag"])
+
+	subprocess.call(["docker", "kill", world["container_name"]])
+	subprocess.call(["docker", "rm", world["container_name"]])
+	subprocess.call(["docker", "rmi", world["image_tag"]])
