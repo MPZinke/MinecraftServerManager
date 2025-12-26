@@ -1,0 +1,20 @@
+version: "3"
+services:
+  minecraft-server:
+    container_name: minecraft-server
+    image: minecraft-server:${VERSION}
+    build:
+      dockerfile: ./Dockerfile
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - 443:443
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: "unless-stopped"
+    tty: true

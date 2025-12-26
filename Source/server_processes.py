@@ -25,22 +25,23 @@ def setup_build_folder(world: dict, version: dict) -> str:
 
 	os.mkdir(build_folder)
 
-	write_dockerfile(build_folder)
+	write_dockerfile(build_folder, world["last_played"] is None)
 	download_server_jar(build_folder, version)
 	write_world_data(build_folder, world["data"])
 
 	return build_folder
 
 
-def write_dockerfile(build_folder: str) -> None:
+def write_dockerfile(build_folder: str, bonus_chest: bool) -> None:
+	bonus_chest_argument = """"--bonusChest" """ if(bonus_chest) else ""
 	with open(os.path.join(build_folder, "Dockerfile"), "w") as file:
 		file.write(
-			"""FROM openjdk:24-slim\n"""
+			"""FROM openjdk:27-ea-slim\n"""
 			"""WORKDIR /usr/app/\n"""
 			"""COPY ./* ./\n"""
 			"""RUN rm Dockerfile\n"""
 			"""EXPOSE 25565\n"""
-			"""CMD ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui", "--bonusChest"]\n"""
+			f"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui", {bonus_chest_argument}]\n"""
 		)
 
 
@@ -101,7 +102,19 @@ def start_server(world_id: int) -> None:
 	port = get_available_port()
 	update_running_world(world_id, port)
 
-	subprocess.call(["docker", "run", "--detach", "--publish", f"25565:{port}", "--name", world["container_name"], world["image_tag"]])
+	subprocess.call(
+		[
+			"docker",
+			"run",
+			"--detach",
+			"--rm",
+			"--publish",
+			f"{port}:25565",
+			"--name",
+			world["container_name"],
+			world["image_tag"]
+		]
+	)
 
 
 def stop_server(world_id: int):
@@ -121,6 +134,5 @@ def stop_server(world_id: int):
 	compressed_data = compress_world_data(data)
 	update_stopped_world(world_id, compressed_data)
 
-	subprocess.call(["docker", "kill", world["container_name"]])
-	subprocess.call(["docker", "rm", world["container_name"]])
+	subprocess.call(["docker", "stop", world["container_name"]])
 	subprocess.call(["docker", "rmi", world["image_tag"]])

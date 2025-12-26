@@ -12,13 +12,3 @@ __author__ = "MPZinke"
 #   FUTURE:                                                                                                            #
 #                                                                                                                      #
 ########################################################################################################################
-
-
-import uvicorn
-
-
-from webapp import app
-
-
-# TODO: On run, update worlds with containers.
-uvicorn.run(app, host="0.0.0.0", port=80)

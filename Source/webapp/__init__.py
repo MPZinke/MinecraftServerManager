@@ -14,11 +14,24 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import uvicorn
+from io import BytesIO
+import os
+from pathlib import Path
+import tarfile
 
 
-from webapp import app
+from quart import Quart
 
 
-# TODO: On run, update worlds with containers.
-uvicorn.run(app, host="0.0.0.0", port=80)
+from webapp.routes.worlds import worlds_blueprint
+from webapp.routes.versions import versions_blueprint
+
+
+WEBAPP_DIR = Path(__file__).parent
+TEMPLATE_FOLDER = WEBAPP_DIR / "Templates"
+STATIC_FOLDER = WEBAPP_DIR / "Static"
+
+
+app = Quart("Minecraft Server Manager", template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
+app.register_blueprint(versions_blueprint)
+app.register_blueprint(worlds_blueprint)

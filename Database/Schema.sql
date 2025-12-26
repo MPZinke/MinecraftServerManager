@@ -24,6 +24,7 @@ CREATE TABLE "Worlds"
 	"notes" TEXT NOT NULL DEFAULT '',
 
 	"last_played" TIMESTAMP DEFAULT NULL,
+	"container_id" VARCHAR(12) NOT NULL DEFAULT '',
 	"container_name" VARCHAR(64) NOT NULL UNIQUE,
 	"image_tag" VARCHAR(64) NOT NULL UNIQUE,
 	"is_running" BOOL DEFAULT FALSE,

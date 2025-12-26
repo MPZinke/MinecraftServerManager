@@ -1,23 +1,28 @@
 <html>
-	<head>
-		<link rel="stylesheet" href="{{ url_for("static", filename="Style.css") }}">
-	</head>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/versions"
+		>
+			Versions
+		</a>
+		&gt; New
+	</header>
 
 	<title>
 		New Version
 	</title>
+
 	<body>
 		<h1>
 			Upload A New Version
 		</h1>
-
-		<a
-			href="/versions"
-		>
-			<button>
-				Versions
-			</button>
-		</a>
 
 		<a
 			href="/worlds"
@@ -28,8 +33,7 @@
 		</a>
 
 		<form
-			method="post"
-			enctype="multipart/form-data"
+			method="POST"
 		>
 			<table>
 				<tr>
@@ -55,20 +59,20 @@
 				</tr>
 				<tr>
 					<td>
-						file
+						url
 					</td>
 					<td>
 						<input
-							type="file"
-							name="file"
+							name="url"
 						/>
 					</td>
 				</tr>
 			</table>
-			<input
+			<button
 				type=submit
-				value=Upload
-			/>
+			>
+				Upload
+			</button>
 		</form>
 	</body>
 </html>

@@ -1,16 +1,22 @@
 <html>
-	<head>
-		<link rel="stylesheet" href="{{ url_for("static", filename="Style.css") }}">
-	</head>
+
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt; New
+	</header>
 
 	<body>
-		<a
-			href="/versions"
-		>
-			<button>
-				Versions
-			</button>
-		</a>
 
 		<form
 			method="POST"
@@ -30,7 +36,11 @@
 					</tr>
 					<tr>
 						<td>
-							Version
+							<a
+								href="/versions"
+							>
+								Version
+							</a>
 						</td>
 						<td>
 							<select
@@ -62,17 +72,5 @@
 				Add
 			</button>
 		</form>
-
-		<div>
-			<a
-				href="/worlds"
-			>
-				<button
-					type="button"
-				>
-					Worlds
-				</button>
-			</a>
-		</div>
 	</body>
 </html>

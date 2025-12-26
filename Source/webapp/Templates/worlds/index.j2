@@ -1,0 +1,114 @@
+<html>
+	<title>
+		Worlds
+	</title>
+
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt; Worlds
+	</header>
+
+	<body>
+		<a
+			href="/versions"
+		>
+			<button>
+				Versions
+			</button>
+		</a>
+		<table
+			class="boxed"
+		>
+			<thead>
+				<tr>
+					<th>
+						Name
+					</th>
+					<th>
+						Version
+					</th>
+					<th>
+						Last Played
+					</th>
+					<th>
+						Created
+					</th>
+					<th>
+						Notes
+					</th>
+					<th>
+						Status
+					</th>
+					<th>
+						Mapped Port
+					</th>
+					<th></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for world in worlds %}
+					<tr>
+						<td>
+							{{ world["name"] }}
+						</td>
+						<td>
+							{{ world["title"] }}
+						</td>
+						<td>
+							{{ world["last_played"] }}
+						</td>
+						<td>
+							{{ world["created"] }}
+						</td>
+						<td>
+							{{ world["notes"] }}
+						</td>
+						<td>
+							{{ ["Stopped", "Running"][world["is_running"]] }}
+						</td>
+						<td>
+							{{ world["mapped_port"] }}
+						</td>
+						<td>
+							{% if(world["is_running"]) %}
+								<a
+									href="/worlds/stop/{{ world["id"] }}"
+								>
+									<button
+										style="color: #D00000;"
+									>
+										⏹
+									</button>
+								</a>
+							{% else %}
+								<a
+									href="/worlds/start/{{ world["id"] }}"
+								>
+									<button
+										style="color: #00D000;"
+									>
+										▶
+									</button>
+								</a>
+							{% endif %}
+						</td>
+						<td>
+							<a
+								href="/worlds/download/{{ world["id"] }}"
+								download="{{ world["name"] + "_data.tar.gz"}}"
+							>
+								⤓
+							</a>
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</body>
+</html>
