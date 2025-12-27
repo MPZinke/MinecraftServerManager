@@ -23,7 +23,16 @@ from quart import redirect, render_template, request, send_file, Blueprint
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
-from database.queries.worlds import get_world, get_worlds, new_world, set_world_container, set_world_stop
+from database.queries.worlds import (
+	get_world,
+	get_worlds,
+	new_world,
+	set_world_building,
+	set_world_container,
+	set_world_exiting,
+	set_world_image,
+	set_world_stop,
+)
 from docker import Container, Image
 
 
@@ -70,22 +79,55 @@ async def POST_worlds_new():
 	return redirect("/worlds")
 
 
-@worlds_blueprint.get("/worlds/start/<int:world_id>")
+@worlds_blueprint.get("/worlds/<int:world_id>")
+async def GET_worlds_id(world_id: int):
+	world: World = get_world(world_id)
+	return await render_template("worlds/world.j2", world=world)
+
+
+@worlds_blueprint.get("/worlds/<int:world_id>/start")
 async def GET_worlds_start_id(world_id: int):
 	world: World = get_world(world_id)
-	if(world.state in ["clean", "paused", "stopped"]):
-		Thread(target=world.start).start()
 
-	return redirect("/worlds")
+	if(world.state == "offline"):
+		set_world_building(world)  # Set it before page reload for snappier UI.
+
+		def start():
+			try:
+				image = Image.build(world)
+				world.image_id = image.id
+				set_world_image(world)
+
+				container = Container.run(image)
+				world.container_id = container.id
+				world.port = container.port
+				set_world_container(world)
+
+			except Exception as error:
+				set_world_stop(world)
+				raise
+
+		Thread(target=start).start()
+
+	return redirect(f"/worlds/{world_id}")
 
 
-@worlds_blueprint.get("/worlds/stop/<int:world_id>")
+@worlds_blueprint.get("/worlds/<int:world_id>/stop")
 async def GET_worlds_stop_id(world_id: int):
 	world = get_world(world_id)
-	if(world.state == "running"):
-		Thread(target=world.stop).start()
 
-	return redirect("/worlds")
+	if(world.state == "running"):
+		set_world_exiting(world)
+
+		def stop():
+			container = Container(world.container_id, Image(world.image_id), world.port)
+			world.data = container.stop()
+			set_world_stop(world)
+			container.image.remove()
+
+		Thread(target=stop).start()
+
+	return redirect(f"/worlds/{world_id}")
 
 
 @worlds_blueprint.get("/worlds/download/<int:world_id>")

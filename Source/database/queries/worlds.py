@@ -61,6 +61,7 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 			"Versions"."url" AS "Versions.url"
 		FROM "Worlds"
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
+		WHERE "Worlds"."is_deleted" = FALSE
 		ORDER BY "Worlds"."id" ASC;
 	"""
 	worlds: list[World] = []
@@ -92,6 +93,19 @@ def new_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 
 
 @connect
+def set_world_building(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "container_id" = %s, "last_played" = NOW(), "port" = %s, "state" = 'building'
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+
+	cursor.execute(query, (world.container_id, world.port, world.id))
+	world.state = "building"
+
+
+@connect
 def set_world_container(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
@@ -101,6 +115,18 @@ def set_world_container(cursor: psycopg2.extras.RealDictCursor, world: World) ->
 	"""
 
 	cursor.execute(query, (world.container_id, world.port, world.id))
+
+
+@connect
+def set_world_exiting(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "image_id" = %s, "state" = 'exiting'
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+
+	cursor.execute(query, (world.image_id, world.id))
 
 
 @connect
@@ -131,7 +157,7 @@ def set_world_state(cursor: psycopg2.extras.RealDictCursor, world: World) -> Non
 def set_world_stop(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "container_id" = NULL, "data" = %s, "image_id" = NULL, "port" = NULL, "state" = 'clean'
+		SET "container_id" = NULL, "data" = %s, "image_id" = NULL, "port" = NULL, "state" = 'offline'
 		WHERE "id" = %s
 		RETURNING *;
 	"""
@@ -141,4 +167,4 @@ def set_world_stop(cursor: psycopg2.extras.RealDictCursor, world: World) -> None
 	world.image_id = None
 	world.data = None
 	world.port = None
-	world.state = "clean"
+	world.state = "offline"

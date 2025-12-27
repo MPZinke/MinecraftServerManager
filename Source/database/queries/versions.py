@@ -38,7 +38,7 @@ def get_version(cursor: psycopg2.extras.RealDictCursor, version_id: int) -> Vers
 @connect
 def get_versions(cursor: psycopg2.extras.RealDictCursor) -> list[Version]:
 	query = """
-		SELECT *
+		SELECT "id", "released", "tag", "title", "url"
 		FROM "Versions"
 		ORDER BY "Versions"."id" ASC;
 	"""

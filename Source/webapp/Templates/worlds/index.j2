@@ -48,17 +48,20 @@
 						Port
 					</th>
 					<th></th>
-					<th></th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for world in worlds %}
 					<tr>
 						<td>
-							{{ world.name }}
+							<a
+								href="/worlds/{{ world.id }}"
+							>
+								{{ world.name }}
+							</a>
 						</td>
 						<td>
-							{{ world.title }}
+							{{ world.version.tag }}
 						</td>
 						<td>
 							{{ world.created.strftime("%Y-%m-%d %H:%M:%S") }}
@@ -78,32 +81,9 @@
 							{{ world.port }}
 						</td>
 						<td>
-							{% if(world.state != "clean") %}
-								<a
-									href="/worlds/stop/{{ world["id"] }}"
-								>
-									<button
-										style="color: #D00000;"
-									>
-										⏹
-									</button>
-								</a>
-							{% else %}
-								<a
-									href="/worlds/start/{{ world["id"] }}"
-								>
-									<button
-										style="color: #00D000;"
-									>
-										▶
-									</button>
-								</a>
-							{% endif %}
-						</td>
-						<td>
 							<a
-								href="/worlds/download/{{ world["id"] }}"
-								download="{{ world["name"] + "_data.tar.gz"}}"
+								href="/worlds/download/{{ world.id }}"
+								download="{{ world.name + "_data.tar.gz"}}"
 							>
 								⤓
 							</a>

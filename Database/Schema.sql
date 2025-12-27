@@ -1,14 +1,10 @@
 
 
 DROP TABLE IF EXISTS "Versions" CASCADE;
-DROP TABLE IF EXISTS "Worlds" CASCADE;
-DROP TABLE IF EXISTS "Biomes" CASCADE;
-DROP TABLE IF EXISTS "Locations" CASCADE;
-
-
 CREATE TABLE "Versions"
 (
 	"id" SERIAL NOT NULL PRIMARY KEY,
+	"is_deleted" BOOL NOT NULL DEFAULT FALSE,
 	"released" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"tag" VARCHAR(48) NOT NULL UNIQUE,
 	"title" VARCHAR(50) NOT NULL UNIQUE,
@@ -16,16 +12,17 @@ CREATE TABLE "Versions"
 );
 
 
+DROP TYPE State CASCADE;
 CREATE TYPE State AS ENUM (
-	'clean',  -- Not building/starting and no docker container.
+	'offline',  -- Not building/starting and no docker container.
 	'building', -- Building the docker image.
 	'starting',  -- Image built, starting the docker container.
 	'running',  -- Running the docker container.
-	'paused',  -- The docker container is paused.
-	'stopped'  -- The docker container is stopped.
+	'exiting'  -- The docker container is paused.
 );
 
 
+DROP TABLE IF EXISTS "Worlds" CASCADE;
 CREATE TABLE "Worlds"
 (
 	"id" SERIAL NOT NULL PRIMARY KEY,
@@ -33,11 +30,12 @@ CREATE TABLE "Worlds"
 	"created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"data" BYTEA DEFAULT NULL,
 	"image_id" VARCHAR(64) DEFAULT NULL,
+	"is_deleted" BOOL NOT NULL DEFAULT FALSE,
 	"last_played" TIMESTAMP DEFAULT NULL,
 	"port" INT DEFAULT NULL,
 	"name" VARCHAR(64) NOT NULL UNIQUE,
 	"notes" TEXT NOT NULL DEFAULT '',
-	"state" State NOT NULL DEFAULT 'clean',
+	"state" State NOT NULL DEFAULT 'offline',
 	"Versions.id" INT NOT NULL,
 	FOREIGN KEY("Versions.id") REFERENCES "Versions"("id")
 );

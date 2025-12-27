@@ -77,9 +77,8 @@ class Image:
 			check=True,
 			text=True,
 		)
-		world.build_id = build_process.stdout.strip().replace("sha256:", "")
 
-		return Image(world.build_id)
+		return Image(build_process.stdout.strip().replace("sha256:", ""))
 
 
 	def remove(self):

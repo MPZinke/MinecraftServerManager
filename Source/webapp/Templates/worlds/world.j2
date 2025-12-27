@@ -1,0 +1,149 @@
+<html>
+	<title>
+		Worlds
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt; {{ world.name }}
+	</header>
+
+	<body>
+		<h1>
+			{{ world.name }}
+		</h1>
+
+		{% if(world.state != "offline") %}
+			<a
+				href="/worlds/{{ world.id }}/stop"
+			>
+				<button
+					style="color: #D00000;"
+				>
+					⏹
+				</button>
+			</a>
+		{% else %}
+			<a
+				href="/worlds/{{ world.id }}/start"
+			>
+				<button
+					style="color: #00D000;"
+				>
+					▶
+				</button>
+			</a>
+		{% endif %}
+
+		<table
+			class="boxed"
+		>
+			<tr>
+				<td>
+
+				</td>
+			</tr>
+			<tr>
+				<td>
+					container_id
+				</td>
+				<td>
+					{{ world.container_id }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					created
+				</td>
+				<td>
+					{{ world.created.strftime("%Y-%m-%d %H:%M:%S") }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					data
+				</td>
+				<td>
+					<a
+						href="/worlds/download/{{ world.id }}"
+						download="{{ world.name + "_data.tar.gz"}}"
+					>
+						⤓
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					image_id
+				</td>
+				<td>
+					{{ world.image_id }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					last_played
+				</td>
+				<td>
+					{% if world.last_played is not none %}
+						{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					port
+				</td>
+				<td>
+					{{ world.port }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					name
+				</td>
+				<td>
+					{{ world.name }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					notes
+				</td>
+				<td>
+					{{ world.notes }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					state
+				</td>
+				<td>
+					{{ world.state }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					version
+				</td>
+				<td>
+					<a
+						href="/version/{{ world.version.id }}"
+					>
+						{{ world.version.tag }}
+					</a>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
