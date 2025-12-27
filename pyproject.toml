@@ -4,8 +4,9 @@ version = "0.0.1"
 authors = [{name="Mathew Zinke"}]
 description = "A service to automatically save & run Minecraft servers."
 dependencies = [
+	"aiohttp==3.13.2",
 	"quart==0.20.0",
-	"psycopg2==2.9.11",
+	"psycopg2",
 	"requests>=2.28.1",
-	"uvicorn==0.40.0",
+	"uvicorn==0.40.0"
 ]

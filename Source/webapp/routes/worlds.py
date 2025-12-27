@@ -15,13 +15,16 @@ __author__ = "MPZinke"
 
 
 from io import BytesIO
+from threading import Thread
 
 
 from quart import redirect, render_template, request, send_file, Blueprint
 
 
-from database.queries import get_versions, get_world, get_worlds_display_data, new_world
-from server_processes import start_server, stop_server
+from database.classes import Version, World
+from database.queries.versions import get_versions
+from database.queries.worlds import get_world, get_worlds, new_world, set_world_container, set_world_stop
+from docker import Container, Image
 
 
 worlds_blueprint = Blueprint('worlds_blueprint', __name__)
@@ -30,36 +33,57 @@ worlds_blueprint = Blueprint('worlds_blueprint', __name__)
 @worlds_blueprint.get("/")
 @worlds_blueprint.get("/worlds")
 async def GET_worlds():
-	worlds = get_worlds_display_data()
+	worlds: list[World] = get_worlds()
 	return await render_template("worlds/index.j2", worlds=worlds)
 
 
 @worlds_blueprint.get("/worlds/new")
 async def GET_worlds_new():
-	versions = get_versions()
+	versions: list[Version] = get_versions()
 	return await render_template("worlds/new.j2", versions=versions)
 
 
 @worlds_blueprint.post("/worlds/new")
 async def POST_worlds_new():
-	name = request.form["name"]
-	notes = request.form["notes"]
-	version_id = int(request.form["version_id"])
-	new_world(name, None, notes, version_id)
+	form = await request.form
+	world = World(
+		id=0,
+		container_id=None,
+		created=None,
+		data=None,
+		image_id=None,
+		last_played=None,
+		port=None,
+		name=form["name-input"],
+		notes=form["notes-input"],
+		state='clean',
+		version=Version(
+			id=int(form["version_id-select"]),
+			released=None,
+			tag=None,
+			title=None,
+			url=None,
+		),
+	)
+	new_world(world)
 
 	return redirect("/worlds")
 
 
 @worlds_blueprint.get("/worlds/start/<int:world_id>")
-async def POST_worlds_start(world_id: int):
-	start_server(world_id)
+async def GET_worlds_start_id(world_id: int):
+	world: World = get_world(world_id)
+	if(world.state in ["clean", "paused", "stopped"]):
+		Thread(target=world.start).start()
 
 	return redirect("/worlds")
 
 
 @worlds_blueprint.get("/worlds/stop/<int:world_id>")
-async def POST_worlds_stop(world_id: int):
-	stop_server(world_id)
+async def GET_worlds_stop_id(world_id: int):
+	world = get_world(world_id)
+	if(world.state == "running"):
+		Thread(target=world.stop).start()
 
 	return redirect("/worlds")
 
@@ -69,4 +93,4 @@ async def GET_worlds_download(world_id: int):
 	world = get_world(world_id)
 
 	file = BytesIO(world["data"])
-	return await send_file(file, attachment_filename=f"""{world["name"]}_data.tar.gz""")
+	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")

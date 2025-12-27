@@ -15,10 +15,10 @@
 
 	<body>
 		<a
-			href="/versions"
+			href="/worlds/new"
 		>
 			<button>
-				Versions
+				+ New World
 			</button>
 		</a>
 		<table
@@ -33,10 +33,10 @@
 						Version
 					</th>
 					<th>
-						Last Played
+						Created
 					</th>
 					<th>
-						Created
+						Last Played
 					</th>
 					<th>
 						Notes
@@ -45,7 +45,7 @@
 						Status
 					</th>
 					<th>
-						Mapped Port
+						Port
 					</th>
 					<th></th>
 					<th></th>
@@ -55,28 +55,30 @@
 				{% for world in worlds %}
 					<tr>
 						<td>
-							{{ world["name"] }}
+							{{ world.name }}
 						</td>
 						<td>
-							{{ world["title"] }}
+							{{ world.title }}
 						</td>
 						<td>
-							{{ world["last_played"] }}
+							{{ world.created.strftime("%Y-%m-%d %H:%M:%S") }}
 						</td>
 						<td>
-							{{ world["created"] }}
+							{% if world.last_played is not none %}
+								{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
+							{% endif %}
 						</td>
 						<td>
-							{{ world["notes"] }}
+							{{ world.notes }}
 						</td>
 						<td>
-							{{ ["Stopped", "Running"][world["is_running"]] }}
+							{{ world.state }}
 						</td>
 						<td>
-							{{ world["mapped_port"] }}
+							{{ world.port }}
 						</td>
 						<td>
-							{% if(world["is_running"]) %}
+							{% if(world.state != "clean") %}
 								<a
 									href="/worlds/stop/{{ world["id"] }}"
 								>

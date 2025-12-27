@@ -5,7 +5,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 #                                                                                                                      #
 #   created by: MPZinke                                                                                                #
-#   on 2025.12.25                                                                                                      #
+#   on 2025.12.26                                                                                                      #
 #                                                                                                                      #
 #   DESCRIPTION:                                                                                                       #
 #   BUGS:                                                                                                              #
@@ -14,37 +14,34 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from quart import redirect, render_template, request, Blueprint
+import psycopg2.extras
 
 
+from database.connect import connect
 from database.classes import Version
-from database.queries.versions import get_versions
 
 
-versions_blueprint = Blueprint('versions_blueprint', __name__)
+@connect
+def get_version(cursor: psycopg2.extras.RealDictCursor, version_id: int) -> Version:
+	query = """
+		SELECT *
+		FROM "Versions"
+		WHERE "id" = %s
+		ORDER BY "Versions"."id" ASC;
+	"""
+
+	cursor.execute(query, (version_id,))
+	version_dict = cursor.fetchone()
+	return Version.from_dict(**version_dict)
 
 
-@versions_blueprint.get("/versions")
-async def GET_versions():
-	versions = get_versions()
-	return await render_template("versions/index.j2", versions=versions)
+@connect
+def get_versions(cursor: psycopg2.extras.RealDictCursor) -> list[Version]:
+	query = """
+		SELECT *
+		FROM "Versions"
+		ORDER BY "Versions"."id" ASC;
+	"""
 
-
-@versions_blueprint.get("/versions/new")
-async def GET_versions_new():
-	versions: list[Version] = get_versions()
-	return await render_template("versions/new.j2", versions=versions)
-
-
-@versions_blueprint.post("/versions/new")
-async def POST_versions_new():
-	version = Version(
-		id=0,
-		released=request.form["released"],
-		tag=request.form["tag"],
-		title=request.form["title"],
-		url=request.form["url"],
-	)
-	new_version(version)
-
-	return redirect("/versions")
+	cursor.execute(query)
+	return list(map(lambda version_dict: Version(**version_dict), cursor))

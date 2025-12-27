@@ -5,7 +5,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 #                                                                                                                      #
 #   created by: MPZinke                                                                                                #
-#   on 2024.07.02                                                                                                      #
+#   on 2025.12.26                                                                                                      #
 #                                                                                                                      #
 #   DESCRIPTION:                                                                                                       #
 #   BUGS:                                                                                                              #
@@ -15,34 +15,30 @@ __author__ = "MPZinke"
 
 
 from datetime import datetime
-import psycopg2.extras
-from typing import Optional
 
 
-from database.connect import connect
+class Version:
+	def __init__(
+		self,
+		id: int,
+		released: datetime,
+		tag: str,
+		title: str,
+		url: str,
+	):
+		self.id: int = id
+		self.released: datetime = released
+		self.tag: str = tag
+		self.title: str = title
+		self.url: str = url
 
 
-@connect
-def update_running_world(cursor: psycopg2.extras.RealDictCursor, world_id: int, mapped_port: int) -> dict:
-	query = """
-		UPDATE "Worlds"
-		SET "is_running" = TRUE, "last_played" = %s, "mapped_port" = %s
-		WHERE "id" = %s
-		RETURNING *;
-	"""
-
-	cursor.execute(query, (datetime.now(), mapped_port, world_id))
-	return dict(cursor.fetchone())
-
-
-@connect
-def update_stopped_world(cursor: psycopg2.extras.RealDictCursor, world_id: int, data: bytes) -> dict:
-	query = """
-		UPDATE "Worlds"
-		SET "is_running" = FALSE, "mapped_port" = NULL, "last_played" = %s, "data" = %s
-		WHERE "id" = %s
-		RETURNING *;
-	"""
-
-	cursor.execute(query, (datetime.now(), data, world_id))
-	return dict(cursor.fetchone())
+	@staticmethod
+	def from_dict(**version_dict: dict) -> object:
+		return Version(
+			id=version_dict["id"],
+			released=version_dict["released"],
+			tag=version_dict["tag"],
+			title=version_dict["title"],
+			url=version_dict["url"],
+		)
