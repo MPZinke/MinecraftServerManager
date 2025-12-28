@@ -22,6 +22,12 @@ from database.classes import Version, World
 
 
 @connect
+def delete_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
+	query = """DELETE FROM "Worlds" WHERE "id" = %s;"""
+	cursor.execute(query, (world_id,))
+
+
+@connect
 def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 	query = """
 		SELECT

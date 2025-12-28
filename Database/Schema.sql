@@ -36,8 +36,7 @@ CREATE TABLE "Worlds"
 	"name" VARCHAR(64) NOT NULL UNIQUE,
 	"notes" TEXT NOT NULL DEFAULT '',
 	"state" State NOT NULL DEFAULT 'offline',
-	"Versions.id" INT NOT NULL,
-	FOREIGN KEY("Versions.id") REFERENCES "Versions"("id")
+	"Versions.id" INT NOT NULL REFERENCES "Versions"("id") ON DELETE CASCADE
 );
 
 
@@ -67,10 +66,8 @@ CREATE TABLE "Locations"
 	"id" SERIAL NOT NULL PRIMARY KEY,
 	"title" TEXT NOT NULL,
 	"location" INT[3] NOT NULL,
-	"Worlds.id" INT NOT NULL,
-	FOREIGN KEY("Worlds.id") REFERENCES "Worlds"("id"),
-	"Biomes.id" INT DEFAULT NULL,
-	FOREIGN KEY("Biomes.id") REFERENCES "Biomes"("id"),
+	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE,
+	"Biomes.id" INT DEFAULT NULL REFERENCES "Biomes"("id"),
 	"notes" TEXT NOT NULL DEFAULT ''
 );
 

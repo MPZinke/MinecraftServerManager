@@ -1,0 +1,176 @@
+<html>
+	<title>
+		Worlds
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt; {{ world.name }}
+	</header>
+
+	<body>
+		<h1>
+			{{ world.name }}
+		</h1>
+
+		<table
+			class="boxed"
+		>
+			</tr>
+			<tr>
+				<td
+					id="state-td"
+				>
+					{{ world.state }}
+				</td>
+				<td
+					id="run_button-td"
+				>
+					{% include "worlds/world/run_button.j2" with context %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					version
+				</td>
+				<td>
+					<a
+						href="/versions/{{ world.version.id }}"
+					>
+						{{ world.version.tag }}
+					</a>
+				</td>
+			<tr>
+				<td>
+					port
+				</td>
+				<td
+					id="port-td"
+				>
+					{% if world.port is not none %}
+						{{ world.port }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					image_id
+				</td>
+				<td
+					id="image_id-td"
+				>
+					{% if world.image_id is not none %}
+						{{ world.image_id }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					container_id
+				</td>
+				<td
+					id="container_id-td"
+				>
+					{% if world.container_id is not none %}
+						{{ world.container_id }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					created
+				</td>
+				<td>
+					{{ world.created.strftime("%Y-%m-%d %H:%M:%S") }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					last_played
+				</td>
+				<td>
+					{% if world.last_played is not none %}
+						{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					data
+				</td>
+				<td>
+					<a
+						href="/worlds/{{ world.id }}/download"
+						download="{{ world.name + "_data.tar.gz"}}"
+					>
+						⤓
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					notes
+				</td>
+				<td>
+					{{ world.notes }}
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
+
+<script>
+	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
+	const CONTAINER_ID_TD = document.getElementById("container_id-td");
+	const IMAGE_ID_TD = document.getElementById("image_id-td");
+	const PORT_TD = document.getElementById("port-td");
+	const STATE_TD = document.getElementById("state-td");
+
+
+	async function update_state()
+	{
+		let response = await fetch(
+			`/worlds/{{ world.id }}/state`,
+			{
+				method: `GET`,
+				headers: {"Content-Type": "application/json"},
+			}
+		);
+
+		let response_json = await response.json();
+
+		RUN_BUTTON_DIV.innerHTML = response_json.run_button;
+		CONTAINER_ID_TD.innerHTML = response_json.container_id;
+		IMAGE_ID_TD.innerHTML = response_json.image_id;
+		PORT_TD.innerHTML = response_json.port;
+		STATE_TD.innerHTML = response_json.state;
+
+		if(response_json.state == "running" || response_json.state == "offline")
+		{
+			clearInterval(INTERVAL);
+		}
+	}
+
+
+	{% if world.state not in ["offline", "running"] %}
+		const INTERVAL = setInterval(update_state, 1000);
+	{% endif %}
+</script>

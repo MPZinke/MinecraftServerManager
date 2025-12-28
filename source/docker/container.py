@@ -95,33 +95,17 @@ class Container:
 
 
 	def stop(self) -> bytes:
-		# Check whether paused.
-		state_process: subprocess.CompletedProcess = subprocess.run(
+		# Pause the container.
+		subprocess.run(
 			[
 				"docker",
-				"ps",
-				"--filter",
-				f"id={self.id}",
-				"--format",
-				"{{.State}}",
+				"pause",
+				self.id,
 			],
 			capture_output=True,
 			check=True,
 			text=True,
 		)
-		state = state_process.stdout.strip()
-		# If not paused, pause the container.
-		if(state != self.PAUSED):
-			subprocess.run(
-				[
-					"docker",
-					"pause",
-					self.id,
-				],
-				capture_output=True,
-				check=True,
-				text=True,
-			)
 
 		# Get the world data from the container.
 		data_process: subprocess.CompletedProcess = subprocess.run(
@@ -139,7 +123,7 @@ class Container:
 		with tarfile.open(fileobj=compressed_bytes_file, mode="w:gz") as compressed_file:
 			with tarfile.open(fileobj=BytesIO(data), mode="r") as tar_file:
 				for file in tar_file.getmembers():
-					if(file.name not in ["app", "app/server.jar", "app/server.1.21.jar"]):
+					if(file.name not in ["app", "app/server.jar"]):
 						compressed_file.addfile(file, tar_file.extractfile(file))
 
 		compressed_bytes_file.seek(0)

@@ -1,0 +1,23 @@
+
+			{% if(world.state != "offline") %}
+				<a
+					href="/worlds/{{ world.id }}/stop"
+				>
+					<button
+						style="color: #D00000;"
+					>
+						⏹
+					</button>
+				</a>
+			{% else %}
+				<a
+					href="/worlds/{{ world.id }}/start"
+				>
+					<button
+						style="color: #00D000;"
+					>
+						▶
+					</button>
+				</a>
+			{% endif %}
+			

@@ -33,20 +33,12 @@
 						Version
 					</th>
 					<th>
-						Created
-					</th>
-					<th>
-						Last Played
-					</th>
-					<th>
-						Notes
-					</th>
-					<th>
 						Status
 					</th>
 					<th>
 						Port
 					</th>
+					<th></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -64,17 +56,6 @@
 							{{ world.version.tag }}
 						</td>
 						<td>
-							{{ world.created.strftime("%Y-%m-%d %H:%M:%S") }}
-						</td>
-						<td>
-							{% if world.last_played is not none %}
-								{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
-							{% endif %}
-						</td>
-						<td>
-							{{ world.notes }}
-						</td>
-						<td>
 							{{ world.state }}
 						</td>
 						<td>
@@ -82,11 +63,24 @@
 						</td>
 						<td>
 							<a
-								href="/worlds/download/{{ world.id }}"
+								href="/worlds/{{ world.id }}/download"
 								download="{{ world.name + "_data.tar.gz"}}"
 							>
-								⤓
+								<button>
+									⤓
+								</button>
 							</a>
+						</td>
+						<td>
+							<form
+								action="/worlds/{{ world.id }}/delete"
+								onsubmit="return confirm(`Are you sure you want to delete world ${world_name}`);"
+								style="margin-bottom: 0px;"
+							>
+								<button>
+									🗑
+								</button>
+							</form>
 						</td>
 					</tr>
 				{% endfor %}

@@ -12,3 +12,6 @@ INSERT INTO "Versions" ("released", "tag", "title", "url") VALUES
 ('2021-01-16', '1.16.5',  'Nether',            'https://launcher.mojang.com/v1/objects/1b557e7b033b583cd9f66746b7a9ab1ec1673ced/server.jar'),
 ('2020-01-14', '1.15.2',  'Buzzy Bees',        'https://launcher.mojang.com/v1/objects/bb2b6b1aefcd70dfd1892149ac3a215f6c636b07/server.jar'),
 ('2019-07-03', '1.14.4',  'Village & Pillage', 'https://launcher.mojang.com/v1/objects/3dc3d84a581f14691199cf6831b71ed1296a9fdf/server.jar');
+
+
+INSERT INTO "Biomes" ("title") VALUES;

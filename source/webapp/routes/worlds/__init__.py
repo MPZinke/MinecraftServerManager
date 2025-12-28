@@ -18,12 +18,13 @@ from io import BytesIO
 from threading import Thread
 
 
-from quart import redirect, render_template, request, send_file, Blueprint
+from quart import jsonify, redirect, render_template, request, send_file, Blueprint
 
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
 from database.queries.worlds import (
+	delete_world,
 	get_world,
 	get_worlds,
 	new_world,
@@ -55,11 +56,13 @@ async def GET_worlds_new():
 @worlds_blueprint.post("/worlds/new")
 async def POST_worlds_new():
 	form = await request.form
+	print(await request.files)
+	file = next((await request.files).values(), None)
 	world = World(
 		id=0,
 		container_id=None,
 		created=None,
-		data=None,
+		data=file.read() if(file is not None) else None,
 		image_id=None,
 		last_played=None,
 		port=None,
@@ -80,13 +83,21 @@ async def POST_worlds_new():
 
 
 @worlds_blueprint.get("/worlds/<int:world_id>")
-async def GET_worlds_id(world_id: int):
+async def GET_worlds_world(world_id: int):
 	world: World = get_world(world_id)
-	return await render_template("worlds/world.j2", world=world)
+	return await render_template("worlds/world/index.j2", world=world)
+
+
+@worlds_blueprint.get("/worlds/<int:world_id>/delete")
+async def GET_worlds_world_delete(world_id: int):
+	world = get_world(world_id)
+	if(world.state == "offline"):
+		delete_world(world_id)
+	return redirect("/worlds")
 
 
 @worlds_blueprint.get("/worlds/<int:world_id>/start")
-async def GET_worlds_start_id(world_id: int):
+async def GET_worlds_world_start(world_id: int):
 	world: World = get_world(world_id)
 
 	if(world.state == "offline"):
@@ -112,8 +123,24 @@ async def GET_worlds_start_id(world_id: int):
 	return redirect(f"/worlds/{world_id}")
 
 
+@worlds_blueprint.get("/worlds/<int:world_id>/state")
+async def GET_worlds_world_state(world_id: int):
+	world = get_world(world_id)
+
+	return jsonify(
+		{
+			"run_button": await render_template("worlds/world/run_button.j2", world=world),
+			"container_id": world.container_id if(world.container_id is not None) else "-",
+			"image_id": world.image_id if(world.image_id is not None) else "-",
+			"port": world.port if(world.port is not None) else "-",
+			"state": world.state,
+		}
+	)
+
+
+
 @worlds_blueprint.get("/worlds/<int:world_id>/stop")
-async def GET_worlds_stop_id(world_id: int):
+async def GET_worlds_world_stop(world_id: int):
 	world = get_world(world_id)
 
 	if(world.state == "running"):
@@ -130,9 +157,9 @@ async def GET_worlds_stop_id(world_id: int):
 	return redirect(f"/worlds/{world_id}")
 
 
-@worlds_blueprint.get("/worlds/download/<int:world_id>")
-async def GET_worlds_download(world_id: int):
+@worlds_blueprint.get("/worlds/<int:world_id>/download")
+async def GET_worlds_world_download(world_id: int):
 	world = get_world(world_id)
 
-	file = BytesIO(world["data"])
+	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
