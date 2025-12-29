@@ -76,10 +76,7 @@ class World:
 				for filename in files:
 					filepath = root_path / filename
 
-					if(filename == "server.jar"):
-						continue
-
-					async with aiofiles.open(filepath, 'rb') as file:
+					async with aiofiles.open(filepath, "rb") as file:
 						data = await file.read()
 
 					info = tarfile.TarInfo(name=str(filepath.relative_to(data_path)))

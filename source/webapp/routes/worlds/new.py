@@ -5,7 +5,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 #                                                                                                                      #
 #   created by: MPZinke                                                                                                #
-#   on 2025.12.27                                                                                                      #
+#   on 2025.12.28                                                                                                      #
 #                                                                                                                      #
 #   DESCRIPTION:                                                                                                       #
 #   BUGS:                                                                                                              #
@@ -14,31 +14,44 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import asyncio
-from io import BytesIO
-from pathlib import Path
-import shutil
-from threading import Thread
-import traceback
-
-
-from quart import jsonify, redirect, render_template, request, send_file, Blueprint
+from quart import redirect, render_template, request, Blueprint
 
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
-from database.queries.worlds import (
-	delete_world,
-	get_world,
-	get_worlds,
-	new_world,
-	set_world_exiting,
-	set_world_running,
-	set_world_starting,
-	set_world_state,
-	set_world_stopped,
-)
-from docker import Container, Image
+from database.queries.worlds import new_world
 
 
-worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)
+worlds_new_blueprint = Blueprint('worlds_new_blueprint', __name__)
+
+
+@worlds_new_blueprint.get("/worlds/new")
+async def GET_worlds_new():
+	versions: list[Version] = get_versions()
+	return await render_template("worlds/new.j2", versions=versions)
+
+
+@worlds_new_blueprint.post("/worlds/new")
+async def POST_worlds_new():
+	form = await request.form
+	data = (await request.files)["file-input"].read()
+	world = World(
+		id=0,
+		created=None,
+		data=data or None,
+		last_played=None,
+		name=form["name-input"],
+		notes=form["notes-input"],
+		port=None,
+		state='clean',
+		version=Version(
+			id=int(form["version_id-select"]),
+			released=None,
+			tag=None,
+			title=None,
+			url=None,
+		),
+	)
+	new_world(world)
+
+	return redirect(f"/worlds/{world.id}")
