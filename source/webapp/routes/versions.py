@@ -14,11 +14,14 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+from datetime import datetime
+
+
 from quart import redirect, render_template, request, Blueprint
 
 
 from database.classes import Version
-from database.queries.versions import get_versions
+from database.queries.versions import get_versions, new_version
 
 
 versions_blueprint = Blueprint('versions_blueprint', __name__)
@@ -40,10 +43,10 @@ async def GET_versions_new():
 async def POST_versions_new():
 	version = Version(
 		id=0,
-		released=request.form["released"],
-		tag=request.form["tag"],
-		title=request.form["title"],
-		url=request.form["url"],
+		released=datetime.strptime("%Y-%m-%d", request.form["released-input"]),
+		tag=request.form["tag-input"],
+		title=request.form["title-input"],
+		url=request.form["url-input"],
 	)
 	new_version(version)
 

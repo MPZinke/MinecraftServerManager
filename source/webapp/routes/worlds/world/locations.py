@@ -42,3 +42,27 @@ from docker import Container, Image
 
 
 worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)
+
+
+@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
+async def GET_worlds_world_locations(world_id: int):
+	world: World = get_world(world_id)
+	return await render_template("worlds/world/locations/index.j2", world=world)
+
+
+@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
+async def GET_worlds_world_locations_new(world_id: int):
+	world: World = get_world(world_id)
+	return await render_template("worlds/world/locations/new.j2")
+
+
+@worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/new")
+async def POST_worlds_world_locations_new(world_id: int):
+	world: World = get_world(world_id)
+	return await redirect(f"/worlds/{world_id}/locations/{location.id}")
+
+
+@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/<int:location_id>")
+async def GET_worlds_world_locations_location(world_id: int, location_id: int):
+	world: World = get_world(world_id)
+	return await render_template("worlds/world/locations/location/index.j2", world=world)

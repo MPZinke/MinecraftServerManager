@@ -45,3 +45,15 @@ def get_versions(cursor: psycopg2.extras.RealDictCursor) -> list[Version]:
 
 	cursor.execute(query)
 	return list(map(lambda version_dict: Version(**version_dict), cursor))
+
+
+@connect
+def new_version(cursor: psycopg2.extras.RealDictCursor, version: Version) -> None:
+	query = """
+		INSERT INTO "Worlds" ("released", "tag", "title", "url") VALUES
+		(%s, %s, %s, %s)
+		RETURNING "id";
+	"""
+
+	cursor.execute(query, (version.released, version.tag, version.title, version.url))
+	version.id = cursor.fetchone()["id"]

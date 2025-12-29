@@ -43,13 +43,32 @@
 				{% for version in versions %}
 					<tr>
 						<td>
-							{{ version["tag"] }}
+							{{ version.tag }}
 						</td>
 						<td>
-							{{ version["title"] }}
+							{{ version.title }}
 						</td>
 						<td>
-							{{ version["released"] }}
+							{{ version.released.strftime("%Y-%m-%d") }}
+						</td>
+						<td>
+							<a
+								href="{{ version.url }}"
+								download="{{ version.tag }}-server.jar"
+							>
+								<button>
+									⤓
+								</button>
+							</a>
+						</td>
+						<td>
+							<a
+								href="/worlds/new?version={{ version.id }}"
+							>
+								<button>
+									+ New World
+								</button>
+							</a>
 						</td>
 					</tr>
 				{% endfor %}

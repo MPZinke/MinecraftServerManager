@@ -27,8 +27,9 @@ worlds_new_blueprint = Blueprint('worlds_new_blueprint', __name__)
 
 @worlds_new_blueprint.get("/worlds/new")
 async def GET_worlds_new():
+	version_id: int = int(request.args.get("version", "0"))
 	versions: list[Version] = get_versions()
-	return await render_template("worlds/new.j2", versions=versions)
+	return await render_template("worlds/new.j2", versions=versions, version_id=version_id)
 
 
 @worlds_new_blueprint.post("/worlds/new")

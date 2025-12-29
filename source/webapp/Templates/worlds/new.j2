@@ -48,8 +48,13 @@
 								name="version_id-select"
 							>
 								{% for version in versions %}
-									<option value="{{ version["id"] }}">
-										{{ version["tag"] }}
+									<option
+										value="{{ version.id }}"
+										{% if version.id == version_id %}
+											selected
+										{% endif %}
+									>
+										{{ version.tag }}
 									</option>
 								{% endfor %}
 							</select>

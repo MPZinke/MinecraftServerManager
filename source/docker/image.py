@@ -32,6 +32,7 @@ class Image:
 		"""WORKDIR /usr/app/\n"""
 		"""EXPOSE 25565\n"""
 		"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "/usr/games/server.jar", "nogui"]\n"""
+		"""CMD []\n"""
 	)
 	REFERENCE_FORMAT = "minecraft:{version}"
 
@@ -91,7 +92,6 @@ class Image:
 		if(process.returncode != 0):
 			raise Exception(f"Failed to check docker images with stderr: {stderr}")
 
-		print(stdout, stderr)
 		return stdout != ""
 
 

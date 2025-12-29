@@ -86,18 +86,18 @@ async def GET_worlds_world_start(world_id: int):
 	return redirect(f"/worlds/{world_id}")
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/state")
+@worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
 	world = get_world(world_id)
 
 	return jsonify(
 		{
 			"run_button": await render_template("worlds/world/run_button.j2", world=world),
+			"last_played": world.last_played.strftime("%Y-%m-%d %H:%M:%S") if(world.last_played is not None) else "-",
 			"port": world.port if(world.port is not None) else "-",
 			"state": world.state,
 		}
 	)
-
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/stop")

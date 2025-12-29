@@ -76,7 +76,9 @@
 				<td>
 					last_played
 				</td>
-				<td>
+				<td
+					id="last_played-td"
+				>
 					{% if world.last_played is not none %}
 						{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
 					{% else %}
@@ -105,6 +107,19 @@
 					{{ world.notes }}
 				</td>
 			</tr>
+			<tr>
+				<td>
+					<form
+						action="/worlds/{{ world.id }}/delete"
+						onsubmit="return confirm(`Are you sure you want to delete world '{{ world.name }}'`);"
+						style="margin-bottom: 0px;"
+					>
+						<button>
+							🗑
+						</button>
+					</form>
+				</td>
+			</tr>
 		</table>
 	</body>
 </html>
@@ -113,12 +128,13 @@
 	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
 	const PORT_TD = document.getElementById("port-td");
 	const STATE_TD = document.getElementById("state-td");
+	const LAST_PLAYED_TD = document.getElementById("last_played-td");
 
 
 	async function update_state()
 	{
 		let response = await fetch(
-			`/worlds/{{ world.id }}/state`,
+			`/worlds/{{ world.id }}/state/json`,
 			{
 				method: `GET`,
 				headers: {"Content-Type": "application/json"},
@@ -128,6 +144,7 @@
 		let response_json = await response.json();
 
 		RUN_BUTTON_DIV.innerHTML = response_json.run_button;
+		LAST_PLAYED_TD.innerHTML = response_json.last_played;
 		PORT_TD.innerHTML = response_json.port;
 		STATE_TD.innerHTML = response_json.state;
 

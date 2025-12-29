@@ -61,27 +61,6 @@
 						<td>
 							{{ world.port }}
 						</td>
-						<td>
-							<a
-								href="/worlds/{{ world.id }}/download"
-								download="{{ world.name + "_data.tar.gz"}}"
-							>
-								<button>
-									⤓
-								</button>
-							</a>
-						</td>
-						<td>
-							<form
-								action="/worlds/{{ world.id }}/delete"
-								onsubmit="return confirm(`Are you sure you want to delete world ${world_name}`);"
-								style="margin-bottom: 0px;"
-							>
-								<button>
-									🗑
-								</button>
-							</form>
-						</td>
 					</tr>
 				{% endfor %}
 			</tbody>

@@ -56,6 +56,10 @@ class Container:
 			sock.bind(("localhost", 0))
 			self.world.port: int = sock.getsockname()[1]
 
+		command_args: list[str] = []  # Default to preexisting command_args
+		if(self.world.last_played is None):
+			command_args.append("--bonusChest")
+
 		process = await asyncio.create_subprocess_exec(
 			"docker",
 			"run",
@@ -70,6 +74,7 @@ class Container:
 			"--volume",
 			f"{data_path}:/usr/app",
 			image.reference,
+			*command_args,
 			stderr=asyncio.subprocess.PIPE,
 			stdout=asyncio.subprocess.PIPE,
 		)

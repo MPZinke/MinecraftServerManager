@@ -38,7 +38,6 @@ worlds_blueprint.register_blueprint(worlds_world_blueprint)
 worlds_blueprint.register_blueprint(worlds_new_blueprint)
 
 
-@worlds_blueprint.get("/")
 @worlds_blueprint.get("/worlds")
 async def GET_worlds():
 	worlds: list[World] = get_worlds()
