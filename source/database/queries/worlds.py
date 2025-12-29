@@ -67,7 +67,37 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 			"Versions"."url" AS "Versions.url"
 		FROM "Worlds"
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
-		WHERE "Worlds"."is_deleted" = FALSE
+		ORDER BY "Worlds"."id" ASC;
+	"""
+	worlds: list[World] = []
+
+	cursor.execute(query)
+	for world_dict in cursor:
+		version = Version(
+			id=world_dict["Versions.id"],
+			released=world_dict["Versions.released"],
+			tag=world_dict["Versions.tag"],
+			title=world_dict["Versions.title"],
+			url=world_dict["Versions.url"],
+		)
+		worlds.append(World.from_dict(version=version, **world_dict))
+
+	return worlds
+
+
+@connect
+def get_running_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
+	query = """
+		SELECT
+			"Worlds".*,
+			"Versions"."id" AS "Versions.id",
+			"Versions"."released" AS "Versions.released",
+			"Versions"."tag" AS "Versions.tag",
+			"Versions"."title" AS "Versions.title",
+			"Versions"."url" AS "Versions.url"
+		FROM "Worlds"
+		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
+		WHERE "Worlds"."state" = 'running'
 		ORDER BY "Worlds"."id" ASC;
 	"""
 	worlds: list[World] = []
@@ -109,6 +139,18 @@ def set_world_exiting(cursor: psycopg2.extras.RealDictCursor, world: World) -> N
 
 	cursor.execute(query, (world.id,))
 	world.state = "exiting"
+
+
+@connect
+def set_world_port(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "port" = %s
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+
+	cursor.execute(query, (world.port, world.id))
 
 
 @connect
@@ -158,6 +200,5 @@ def set_world_stopped(cursor: psycopg2.extras.RealDictCursor, world: World) -> N
 	"""
 
 	cursor.execute(query, (world.data, world.id))
-	world.data = None
 	world.port = None
 	world.state = "offline"

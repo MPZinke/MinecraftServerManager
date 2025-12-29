@@ -59,7 +59,11 @@
 							{{ world.state }}
 						</td>
 						<td>
-							{{ world.port }}
+							{% if world.port is not none %}
+								{{ world.port }}
+							{% else %}
+								-
+							{% endif %}
 						</td>
 					</tr>
 				{% endfor %}

@@ -39,7 +39,7 @@ class Container:
 		self.world: World = world
 
 
-	async def run(self, data_path: Path):
+	async def run(self):
 		image = Image(self.world.version)
 		if(not await image.exists()):
 			print("Image does not exist. Building it now.")
@@ -72,7 +72,7 @@ class Container:
 			"--publish",
 			f"{self.world.port}:25565",
 			"--volume",
-			f"{data_path}:/usr/app",
+			f"{self.world._data_path}:/usr/app",
 			image.reference,
 			*command_args,
 			stderr=asyncio.subprocess.PIPE,

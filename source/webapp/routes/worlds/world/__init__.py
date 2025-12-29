@@ -69,15 +69,14 @@ async def GET_worlds_world_start(world_id: int):
 
 		async def start_world():
 			try:
-				data_path = Path(f"/Users/mpzinke/Workspace/world-{world.id}")
-				await world.write_data(data_path)
+				await world.write_data()
 				container = Container(world)
-				await container.run(data_path)
+				await container.run()
 
 				set_world_running(world)
 
 			except Exception:
-				traceback.print_exc()
+				print(traceback.format_exc())
 				set_world_stopped(world)
 				raise
 
@@ -114,13 +113,12 @@ async def GET_worlds_world_stop(world_id: int):
 			except Exception:
 				world.state = "running"
 				set_world_state(world)
-				traceback.print_exc()
+				print(traceback.format_exc())
 				return
 
-			data_path = Path(f"/Users/mpzinke/Workspace/world-{world.id}")
-			await world.read_data(data_path)
+			await world.read_data()
 			set_world_stopped(world)
-			shutil.rmtree(data_path)
+			shutil.rmtree(world._data_path)
 
 		asyncio.create_task(stop_world())
 

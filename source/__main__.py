@@ -14,11 +14,33 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import traceback
+
+
 import uvicorn
 
 
+from update import update_world_statuses, run_update
 from webapp import app
 
 
-# TODO: On run, update worlds with containers.
-uvicorn.run(app, host="0.0.0.0", port=80)
+def main():
+	try:
+		update_world_statuses()
+
+	except Exception:
+		print(traceback.format_exc())
+
+	event, thread = run_update()
+
+	uvicorn.run(app, host="0.0.0.0", port=80)
+
+	print("Setting thread")
+	event.set()
+	print("Joining thread")
+	thread.join()
+	print("Bye bye")
+
+
+if(__name__ == "__main__"):
+	main()

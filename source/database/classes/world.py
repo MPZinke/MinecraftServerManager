@@ -20,13 +20,20 @@ import os
 from pathlib import Path
 import shutil
 import tarfile
-from typing import Optional
+from typing import Optional, TypeVar
 
 
 import aiofiles
 
 
 from database.classes.version import Version
+
+
+World = TypeVar("World")
+
+
+def raise_exception(exception: Exception):
+	raise exception
 
 
 class World:
@@ -52,9 +59,11 @@ class World:
 		self.state: Optional[str] = state
 		self.version: Version = version
 
+		self._data_path: Path = Path(os.getenv("DATA_PATH"), f"world-{self.id}")
+
 
 	@staticmethod
-	def from_dict(**world_dict: dict) -> object:
+	def from_dict(**world_dict: dict) -> World:
 		return World(
 			id=world_dict["id"],
 			created=world_dict["created"],
@@ -68,10 +77,10 @@ class World:
 		)
 
 
-	async def read_data(self, data_path: Path) -> None:
+	async def read_data(self) -> None:
 		compressed_bytes_file = BytesIO()
 		with tarfile.open(fileobj=compressed_bytes_file, mode="w:gz") as compressed_file:
-			for root, _, files in os.walk(data_path):
+			for root, _, files in os.walk(self._data_path, onerror=raise_exception):
 				root_path = Path(root)
 				for filename in files:
 					filepath = root_path / filename
@@ -79,7 +88,7 @@ class World:
 					async with aiofiles.open(filepath, "rb") as file:
 						data = await file.read()
 
-					info = tarfile.TarInfo(name=str(filepath.relative_to(data_path)))
+					info = tarfile.TarInfo(name=str(filepath.relative_to(self._data_path)))
 					info.size = len(data)
 
 					compressed_file.addfile(info, BytesIO(data))
@@ -89,12 +98,12 @@ class World:
 		self.data = compressed_bytes_file.read()
 
 
-	async def write_data(self, data_path: Path) -> None:
-		if(data_path.exists()):
-			shutil.rmtree(data_path)
+	async def write_data(self) -> None:
+		if(self._data_path.exists()):
+			shutil.rmtree(self._data_path)
 
-		data_path.mkdir()
+		self._data_path.mkdir()
 
 		world_data_file = BytesIO(self.data)
 		with tarfile.open(fileobj=world_data_file, mode="r:gz") as tar_file:
-			tar_file.extractall(data_path)
+			tar_file.extractall(self._data_path)
