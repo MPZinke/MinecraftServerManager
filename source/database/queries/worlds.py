@@ -99,52 +99,41 @@ def new_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 
 
 @connect
-def set_world_building(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
-	query = """
-		UPDATE "Worlds"
-		SET "container_id" = %s, "last_played" = NOW(), "port" = %s, "state" = 'building'
-		WHERE "id" = %s
-		RETURNING *;
-	"""
-
-	cursor.execute(query, (world.container_id, world.port, world.id))
-	world.state = "building"
-
-
-@connect
-def set_world_container(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
-	query = """
-		UPDATE "Worlds"
-		SET "container_id" = %s, "last_played" = NOW(), "port" = %s, "state" = 'running'
-		WHERE "id" = %s
-		RETURNING *;
-	"""
-
-	cursor.execute(query, (world.container_id, world.port, world.id))
-
-
-@connect
 def set_world_exiting(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "image_id" = %s, "state" = 'exiting'
+		SET "state" = 'exiting'
 		WHERE "id" = %s
 		RETURNING *;
 	"""
 
-	cursor.execute(query, (world.image_id, world.id))
+	cursor.execute(query, (world.id,))
+	world.state = "exiting"
 
 
 @connect
-def set_world_image(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+def set_world_running(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "image_id" = %s, "state" = 'starting'
+		SET "last_played" = NOW(), "port" = %s, "state" = 'running'
 		WHERE "id" = %s
 		RETURNING *;
 	"""
 
-	cursor.execute(query, (world.image_id, world.id))
+	cursor.execute(query, (world.port, world.id))
+
+
+@connect
+def set_world_starting(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "state" = 'starting'
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+
+	cursor.execute(query, (world.id,))
+	world.state = "starting"
 
 
 @connect
@@ -160,17 +149,15 @@ def set_world_state(cursor: psycopg2.extras.RealDictCursor, world: World) -> Non
 
 
 @connect
-def set_world_stop(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+def set_world_stopped(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "container_id" = NULL, "data" = %s, "image_id" = NULL, "port" = NULL, "state" = 'offline'
+		SET "data" = %s, "port" = NULL, "state" = 'offline'
 		WHERE "id" = %s
 		RETURNING *;
 	"""
 
 	cursor.execute(query, (world.data, world.id))
-	world.container_id = None
-	world.image_id = None
 	world.data = None
 	world.port = None
 	world.state = "offline"

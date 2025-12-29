@@ -16,13 +16,15 @@ __author__ = "MPZinke"
 
 import asyncio
 from io import BytesIO
+from pathlib import Path
+import shutil
 import socket
 import subprocess
 import tarfile
-from threading import Thread
 from typing import Optional
 
 
+from database.classes import World
 from docker.image import Image
 
 
@@ -32,45 +34,48 @@ class Container:
 	RUNNING = "running"
 
 
-	def __init__(self, id: str, image: Image, port: Optional[int]):
-		self.id: str = id
-		self.image: Image = image
-		self.port: Optional[int] = port
+	def __init__(self, world: World):
+		self.name: str = f"minecraft-{world.id}"
+		self.world: World = world
 
 
-	@staticmethod
-	def run(image: Image) -> object:
-		port: Optional[int] = None
+	async def run(self, data_path: Path):
+		image = Image(self.world.version)
+		if(not await image.exists()):
+			print("Image does not exist. Building it now.")
+			await image.build()
+
+		# Get an available port.
 		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			if(s.connect_ex(('', 25565)) != 0):
-				port: int = 25565
+				self.world.port: int = 25565
 
-		if(port is None):
+		if(self.world.port is None):
 			# FROM: https://stackoverflow.com/a/1365284
 			sock = socket.socket()
 			sock.bind(("localhost", 0))
-			port: int = sock.getsockname()[1]
+			self.world.port: int = sock.getsockname()[1]
 
-		run_process = subprocess.run(
-			[
-				"docker",
-				"run",
-				"--detach",
-				"--rm",
-				"--publish",
-				f"{port}:25565",
-				"--name",
-				f"minecraft-{image.id}",
-				image.id,
-			],
-			capture_output=True,
-			check=True,
-			text=True,
+		process = await asyncio.create_subprocess_exec(
+			"docker",
+			"run",
+			"--detach",
+			"--interactive",
+			"--rm",
+			"--tty",
+			"--name",
+			self.name,
+			"--publish",
+			f"{self.world.port}:25565",
+			"--volume",
+			f"{data_path}:/usr/app",
+			image.reference,
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
 		)
-		if(run_process.returncode != 0):
-			print(run_process.stderr, run_process.stdout)
-
-		return Container(run_process.stdout.strip().replace("sha256:", ""), image, port)
+		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		if(process.returncode != 0):
+			raise Exception(f"Failed to run docker container with stderr: {stderr}")
 
 
 	async def state(self) -> str:
@@ -79,64 +84,27 @@ class Container:
 			"ps",
 			"--all",
 			"--filter",
-			f"id={self.id}",
+			f"name={self.name}",
 			"--format",
 			"{{.State}}",
 			stderr=asyncio.subprocess.PIPE,
 			stdout=asyncio.subprocess.PIPE,
 		)
-
-		await process.wait()
-
+		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
 		if(process.returncode != 0):
-			return None
+			raise Exception(f"Failed to check docker container with stderr: {stderr}")
 
-		return (await process.communicate())[0].decode().strip()
+		return stdout
 
 
-	def stop(self) -> bytes:
-		# Pause the container.
-		subprocess.run(
-			[
-				"docker",
-				"pause",
-				self.id,
-			],
-			capture_output=True,
-			check=True,
-			text=True,
+	async def stop(self) -> None:
+		process = await asyncio.create_subprocess_exec(
+			"docker",
+			"stop",
+			self.name,
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
 		)
-
-		# Get the world data from the container.
-		data_process: subprocess.CompletedProcess = subprocess.run(
-			[
-				"docker",
-				"cp",
-				f"{self.id}:/usr/app",
-				"-",
-			],
-			capture_output=True,
-			check=True,
-		)
-		data: bytes = data_process.stdout
-		compressed_bytes_file = BytesIO()
-		with tarfile.open(fileobj=compressed_bytes_file, mode="w:gz") as compressed_file:
-			with tarfile.open(fileobj=BytesIO(data), mode="r") as tar_file:
-				for file in tar_file.getmembers():
-					if(file.name not in ["app", "app/server.jar"]):
-						compressed_file.addfile(file, tar_file.extractfile(file))
-
-		compressed_bytes_file.seek(0)
-
-		# Fully stop & remove container.
-		subprocess.run(
-			[
-				"docker",
-				"stop",
-				self.id,
-			],
-			capture_output=True,
-			check=False,
-		)
-
-		return compressed_bytes_file.read()
+		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		if(process.returncode != 0):
+			raise Exception(f"Failed to stop docker container with stderr: {stderr}")

@@ -14,86 +14,95 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from io import BytesIO
-import os
+import asyncio
 from pathlib import Path
-import requests
-import shutil
-import subprocess
-import tarfile
 
 
-from database.queries.worlds import set_world_image, set_world_state
+import aiofiles
+import aiohttp
+
+
+from database.classes import Version
 
 
 class Image:
 	DOCKERFILE = (
 		"""FROM openjdk:27-ea-slim\n"""
+		"""COPY ./server.jar /usr/games/server.jar\n"""
 		"""WORKDIR /usr/app/\n"""
-		"""COPY ./* ./\n"""
-		"""RUN rm Dockerfile\n"""
 		"""EXPOSE 25565\n"""
-		"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"{bonus_chest}]\n"""
+		"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "/usr/games/server.jar", "nogui"]\n"""
 	)
+	REFERENCE_FORMAT = "minecraft:{version}"
 
 
-	def __init__(self, id: str):
-		self.id: str = id
+	def __init__(self, version: Version):
+		self.reference: str = self.REFERENCE_FORMAT.format(version=version.tag)
+		self.version: Version = version
 
 
-	@staticmethod
-	def build(world: object) -> object:
-		# Create dockerfile.
-		build_folder = Path(f"/tmp/minecraft_build-{world.id}")
-		if(build_folder.exists()):
-			shutil.rmtree(build_folder)
+	async def build(self) -> None:
+		# Create build directory.
+		build_folder = Path(f"/tmp/minecraft_build-{self.version.tag}")
+		if(not build_folder.exists()):
+			build_folder.mkdir()
 
-		build_folder.mkdir()
-
-		with open(build_folder / "Dockerfile", "w") as file:
-			file.write(Image.DOCKERFILE.format(bonus_chest=""", "--bonusChest" """ if(world.last_played is None) else ""))
+		# Create dockerfile in build directory.
+		async with aiofiles.open(build_folder / "Dockerfile", 'w') as file:
+			await file.write(self.DOCKERFILE)
 
 		# Add server.jar.
-		response: requests.Response = requests.get(world.version.url, stream=True, timeout=21)
-		with open(os.path.join(build_folder, "server.jar"), "wb") as file:
-			for chunk in response.iter_content(chunk_size=1024):
-				file.write(chunk)
-
-		# Add world.
-		world_data_file = BytesIO(world.data)
-		with tarfile.open(fileobj=world_data_file, mode="r:gz") as tar_file:
-			tar_file.extractall(build_folder)
+		async with aiohttp.ClientSession() as session:
+			async with session.get(self.version.url) as response:
+				response.raise_for_status()
+				async with aiofiles.open(build_folder / "server.jar", 'wb') as file:
+					while(chunk := await response.content.read(1024)):
+						await file.write(chunk)
 
 		# Docker build.
-		build_process = subprocess.run(
-			[
-				"docker",
-				"build",
-				"--progress",
-				"quiet",
-				build_folder,
-			],
-			capture_output=True,
-			check=True,
-			text=True,
+		process = await asyncio.create_subprocess_exec(
+			"docker",
+			"build",
+			"--tag",
+			self.reference,
+			"--progress",
+			"quiet",
+			build_folder,
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
 		)
+		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		if(process.returncode != 0):
+			raise Exception(f"Failed to build docker image with stderr: {stderr}")
 
-		return Image(build_process.stdout.strip().replace("sha256:", ""))
 
-
-	def remove(self):
-		subprocess.run(
-			[
-				"docker",
-				"rmi",
-				self.id
-			],
-			capture_output=True,
-			check=True,
-			text=True,
+	async def exists(self) -> bool:
+		process = await asyncio.create_subprocess_exec(
+			"docker",
+			"images",
+			"--filter",
+			f"reference={self.reference}",
+			"--format",
+			"{{.Repository}}:{{.Tag}}",
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
 		)
+		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		if(process.returncode != 0):
+			raise Exception(f"Failed to check docker images with stderr: {stderr}")
+
+		print(stdout, stderr)
+		return stdout != ""
 
 
-	async def run(self) -> object:
-		from docker import Container
-		return await Container.run(self)
+	async def remove(self) -> None:
+		process = await asyncio.create_subprocess_exec(
+			"docker",
+			"rmi",
+			self.reference,
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
+		)
+		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		if(process.returncode != 0):
+			raise Exception(f"Failed to remove docker image with stderr: {stderr}")

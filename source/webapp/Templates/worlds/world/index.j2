@@ -66,34 +66,6 @@
 			</tr>
 			<tr>
 				<td>
-					image_id
-				</td>
-				<td
-					id="image_id-td"
-				>
-					{% if world.image_id is not none %}
-						{{ world.image_id }}
-					{% else %}
-						-
-					{% endif %}
-				</td>
-			</tr>
-			<tr>
-				<td>
-					container_id
-				</td>
-				<td
-					id="container_id-td"
-				>
-					{% if world.container_id is not none %}
-						{{ world.container_id }}
-					{% else %}
-						-
-					{% endif %}
-				</td>
-			</tr>
-			<tr>
-				<td>
 					created
 				</td>
 				<td>
@@ -139,8 +111,6 @@
 
 <script>
 	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
-	const CONTAINER_ID_TD = document.getElementById("container_id-td");
-	const IMAGE_ID_TD = document.getElementById("image_id-td");
 	const PORT_TD = document.getElementById("port-td");
 	const STATE_TD = document.getElementById("state-td");
 
@@ -158,8 +128,6 @@
 		let response_json = await response.json();
 
 		RUN_BUTTON_DIV.innerHTML = response_json.run_button;
-		CONTAINER_ID_TD.innerHTML = response_json.container_id;
-		IMAGE_ID_TD.innerHTML = response_json.image_id;
 		PORT_TD.innerHTML = response_json.port;
 		STATE_TD.innerHTML = response_json.state;
 

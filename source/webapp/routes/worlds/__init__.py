@@ -14,8 +14,12 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import asyncio
 from io import BytesIO
+from pathlib import Path
+import shutil
 from threading import Thread
+import traceback
 
 
 from quart import jsonify, redirect, render_template, request, send_file, Blueprint
@@ -28,11 +32,11 @@ from database.queries.worlds import (
 	get_world,
 	get_worlds,
 	new_world,
-	set_world_building,
-	set_world_container,
 	set_world_exiting,
-	set_world_image,
-	set_world_stop,
+	set_world_running,
+	set_world_starting,
+	set_world_state,
+	set_world_stopped,
 )
 from docker import Container, Image
 
@@ -101,24 +105,23 @@ async def GET_worlds_world_start(world_id: int):
 	world: World = get_world(world_id)
 
 	if(world.state == "offline"):
-		set_world_building(world)  # Set it before page reload for snappier UI.
+		set_world_starting(world)  # Set it before page reload for snappier UI.
 
-		def start():
+		async def start_world():
 			try:
-				image = Image.build(world)
-				world.image_id = image.id
-				set_world_image(world)
+				data_path = Path(f"/Users/mpzinke/Workspace/world-{world.id}")
+				await world.write_data(data_path)
+				container = Container(world)
+				await container.run(data_path)
 
-				container = Container.run(image)
-				world.container_id = container.id
-				world.port = container.port
-				set_world_container(world)
+				set_world_running(world)
 
-			except Exception as error:
-				set_world_stop(world)
+			except Exception:
+				traceback.print_exc()
+				set_world_stopped(world)
 				raise
 
-		Thread(target=start).start()
+		asyncio.create_task(start_world())
 
 	return redirect(f"/worlds/{world_id}")
 
@@ -130,8 +133,6 @@ async def GET_worlds_world_state(world_id: int):
 	return jsonify(
 		{
 			"run_button": await render_template("worlds/world/run_button.j2", world=world),
-			"container_id": world.container_id if(world.container_id is not None) else "-",
-			"image_id": world.image_id if(world.image_id is not None) else "-",
 			"port": world.port if(world.port is not None) else "-",
 			"state": world.state,
 		}
@@ -146,13 +147,22 @@ async def GET_worlds_world_stop(world_id: int):
 	if(world.state == "running"):
 		set_world_exiting(world)
 
-		def stop():
-			container = Container(world.container_id, Image(world.image_id), world.port)
-			world.data = container.stop()
-			set_world_stop(world)
-			container.image.remove()
+		async def stop_world():
+			container = Container(world)
+			try:
+				await container.stop()
+			except Exception:
+				world.state = "running"
+				set_world_state(world)
+				traceback.print_exc()
+				return
 
-		Thread(target=stop).start()
+			data_path = Path(f"/Users/mpzinke/Workspace/world-{world.id}")
+			await world.read_data(data_path)
+			set_world_stopped(world)
+			shutil.rmtree(data_path)
+
+		asyncio.create_task(stop_world())
 
 	return redirect(f"/worlds/{world_id}")
 
