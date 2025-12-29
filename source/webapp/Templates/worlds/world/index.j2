@@ -1,6 +1,6 @@
 <html>
 	<title>
-		Worlds
+		{{ world.name }}
 	</title>
 
 	<header>
@@ -22,6 +22,14 @@
 		<h1>
 			{{ world.name }}
 		</h1>
+
+		<a
+			href="/worlds/{{ world.id }}/locations"
+		>
+			<button>
+				Locations
+			</button>
+		</a>
 
 		<table
 			class="boxed"

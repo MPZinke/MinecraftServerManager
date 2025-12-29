@@ -1,0 +1,89 @@
+<html>
+	<title>
+		{{ world.name }} Locations
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt;
+		<a
+			href="/worlds/{{ world.id }}"
+		>
+			{{ world.name }}
+		</a>
+		&gt; Locations
+	</header>
+
+	<body>
+		<h1>
+			Locations
+		</h1>
+
+		<a
+			href="/worlds/{{ world.id }}/locations/new"
+		>
+			<button>
+				+ New Location
+			</button>
+		</a>
+
+		<table
+		  class="table table-dark table-striped"
+		>
+			<thead>
+				<th
+				  class="col-md-3"
+				>
+					Title
+				</th>
+				<th
+				  class="col-md-2"
+				>
+					Location
+				</th>
+				<th
+				  class="col-md-2"
+				>
+					Biome
+				</th>
+				<th
+				  class="col-md-5"
+				>
+					Notes
+				</th>
+			</thead>
+			<tbody>
+				{% for location in locations %}
+					<tr>
+						<td>
+							{{ location.title }}
+						</td>
+						<td>
+							{{ location.location[0] }}, {{ location.location[1] }}, {{ location.location[2] }}
+						</td>
+						<td>
+							{% if location.biome.title is not none %}
+								{{ location.biome.title }}
+							{% else %}
+								-
+							{% endif %}
+						</td>
+						<td>
+							{{ location.notes }}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</body>
+</html>

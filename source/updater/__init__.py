@@ -61,7 +61,7 @@ def update_loop(event: Event):
 	print("Exited event loop.")
 
 
-def run_update() -> Tuple[Event, Thread]:
+def start_updater() -> Tuple[Event, Thread]:
 	event = Event()
 	thread = Thread(target=update_loop, args=(event,))
 	thread.start()

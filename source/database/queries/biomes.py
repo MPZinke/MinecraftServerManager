@@ -14,31 +14,20 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from typing import TypeVar
+import psycopg2.extras
 
 
-Biome = TypeVar("Biome")
+from database.connect import connect
+from database.classes import Biome
 
 
-class Biome:
-	def __init__(
-		self,
-		id: int,
-		title: str,
-		world: str,
-		description: str,
-	):
-		self.id: int = id
-		self.title: str = title
-		self.world: str = world
-		self.description: str = description
+@connect
+def get_biomes(cursor: psycopg2.extras.RealDictCursor) -> list[Biome]:
+	query = """
+		SELECT *
+		FROM "Biomes"
+		ORDER BY "title";
+	"""
 
-
-	@staticmethod
-	def from_dict(**location_dict: dict) -> Biome:
-		return Biome(
-			id=location_dict["id"],
-			title=location_dict["title"],
-			world=location_dict["world"],
-			description=location_dict["description"],
-		)
+	cursor.execute(query)
+	return list(map(lambda biome_dict: Biome.from_dict(**biome_dict), cursor))

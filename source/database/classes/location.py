@@ -17,11 +17,9 @@ __author__ = "MPZinke"
 from typing import Tuple, TypeVar
 
 
-from database.classes.biome import Biome
-from database.classes.world import World
-
-
+Biome = TypeVar("Biome")
 Location = TypeVar("Location")
+World = TypeVar("World")
 
 
 class Location:

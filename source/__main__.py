@@ -20,7 +20,7 @@ import traceback
 import uvicorn
 
 
-from update import update_world_statuses, run_update
+from updater import update_world_statuses, start_updater
 from webapp import app
 
 
@@ -31,15 +31,13 @@ def main():
 	except Exception:
 		print(traceback.format_exc())
 
-	event, thread = run_update()
+	event, thread = start_updater()
 
 	uvicorn.run(app, host="0.0.0.0", port=80)
 
-	print("Setting thread")
+	print("Shutting down updater")
 	event.set()
-	print("Joining thread")
 	thread.join()
-	print("Bye bye")
 
 
 if(__name__ == "__main__"):

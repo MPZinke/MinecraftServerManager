@@ -1,0 +1,91 @@
+<html>
+	<title>
+		Worlds
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt;
+		<a
+			href="/worlds/{{ world.id }}"
+		>
+			{{ world.name }}
+		</a>
+		&gt;
+		<a
+			href="/worlds/{{ world.id }}/locations"
+		>
+			Locations
+		</a>
+		&gt; New
+	</header>
+
+	<body>
+		<form
+			method="POST"
+		>
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							Title
+						</td>
+						<td>
+							<input
+								name="title-input"
+							/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Biome
+						</td>
+						<td>
+							<select
+								name="biome-select"
+							>
+								<option
+									value=""
+									selected
+								>
+								</option>
+								{% for biome in biomes %}
+									<option
+										value="{{ biome.id }}"
+									>
+										{{ biome.title }}
+									</option>
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Notes
+						</td>
+						<td>
+							<textarea
+								name="notes-textarea"
+							></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<button
+				type="submit"
+			>
+				Add
+			</button>
+		</form>
+	</body>
+</html>

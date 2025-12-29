@@ -14,5 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+from database.classes.biome import Biome
+from database.classes.location import Location
 from database.classes.version import Version
 from database.classes.world import World

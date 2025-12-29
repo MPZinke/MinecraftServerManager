@@ -69,9 +69,9 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	worlds: list[World] = []
-
 	cursor.execute(query)
+
+	worlds: list[World] = []
 	for world_dict in cursor:
 		version = Version(
 			id=world_dict["Versions.id"],
@@ -100,9 +100,9 @@ def get_running_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 		WHERE "Worlds"."state" = 'running'
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	worlds: list[World] = []
-
 	cursor.execute(query)
+
+	worlds: list[World] = []
 	for world_dict in cursor:
 		version = Version(
 			id=world_dict["Versions.id"],
