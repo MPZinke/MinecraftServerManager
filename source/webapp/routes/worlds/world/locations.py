@@ -22,10 +22,10 @@ from quart import redirect, render_template, request, Blueprint
 
 from database.classes import Biome, Location, World
 from database.queries.biomes import get_biomes
-from database.queries.locations import get_locations_for_world, new_location
+from database.queries.locations import delete_location, get_location, get_locations_for_world, new_location
 from database.queries.worlds import get_world
 from docker import Container
-from minecraft import get_player_location
+from minecraft import get_player_location, teleport_player
 
 
 worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)
@@ -53,7 +53,7 @@ async def POST_worlds_world_locations_new(world_id: int):
 	notes: str = form["notes-textarea"]
 	world: World = get_world(world_id)
 
-	location: Tuple[int, int, int] = get_player_location(Container(world), "MPZinke")  # TODO
+	location: Tuple[int, int, int] = await get_player_location(Container(world), "MPZinke")  # TODO
 
 	location = Location(
 		id=0,
@@ -72,10 +72,19 @@ async def POST_worlds_world_locations_new(world_id: int):
 	new_location(location)
 
 	return redirect(f"/worlds/{world_id}/locations")
-	# return redirect(f"/worlds/{world_id}/locations/{location.id}")
 
 
-@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/<int:location_id>")
-async def GET_worlds_world_locations_location(world_id: int, location_id: int):
+@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/<int:location_id>/delete")
+async def GET_worlds_world_locations_location_delete(world_id: int, location_id: int):
+	delete_location(location_id)
+	return redirect(f"/worlds/{world_id}/locations")
+
+
+@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/<int:location_id>/tp")
+async def GET_worlds_world_locations_location_tp(world_id: int, location_id: int):
 	world: World = get_world(world_id)
-	return await render_template("worlds/world/locations/location/index.j2", world=world)
+	location: Location = get_location(location_id)
+
+	await teleport_player(Container(world), "MPZinke", location.location)
+
+	return redirect(f"/worlds/{world_id}/locations")

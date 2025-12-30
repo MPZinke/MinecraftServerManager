@@ -28,6 +28,38 @@ def delete_location(cursor: psycopg2.extras.RealDictCursor, location_id: int) ->
 
 
 @connect
+def get_location(cursor: psycopg2.extras.RealDictCursor, location_id: int) -> list[Location]:
+	query = """
+		SELECT
+			"Locations".*,
+			"Biomes"."id" AS "Biomes.id",
+			"Biomes"."world" AS "Biomes.world",
+			"Biomes"."title" AS "Biomes.title",
+			"Biomes"."description" AS "Biomes.description"
+		FROM "Locations"
+		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
+		WHERE "Locations"."id" = %s
+		ORDER BY "title";
+	"""
+	cursor.execute(query, (location_id,))
+	location_dict: dict = cursor.fetchone()
+
+	return Location.from_dict(
+		id=location_dict["id"],
+		title=location_dict["title"],
+		location=location_dict["location"],
+		notes=location_dict["notes"],
+		world=None,
+		biome=Biome(
+			id=location_dict["Biomes.id"],
+			world=location_dict["Biomes.world"],
+			title=location_dict["Biomes.title"],
+			description=location_dict["Biomes.description"],
+		),
+	)
+
+
+@connect
 def get_locations_for_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> list[Location]:
 	query = """
 		SELECT
@@ -61,7 +93,6 @@ def get_locations_for_world(cursor: psycopg2.extras.RealDictCursor, world: World
 			)
 		)
 	return locations
-
 
 
 @connect

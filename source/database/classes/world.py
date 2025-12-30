@@ -83,12 +83,16 @@ class World:
 			for root, _, files in os.walk(self._data_path, onerror=raise_exception):
 				root_path = Path(root)
 				for filename in files:
-					filepath = root_path / filename
+					filepath: Path = root_path / filename
+					relative_filepath: Path = filepath.relative_to(self._data_path)
+
+					if(next(iter(relative_filepath.parts), None) in ["libraries", "logs", "versions"]):
+						continue
 
 					async with aiofiles.open(filepath, "rb") as file:
 						data = await file.read()
 
-					info = tarfile.TarInfo(name=str(filepath.relative_to(self._data_path)))
+					info = tarfile.TarInfo(name=str(relative_filepath))
 					info.size = len(data)
 
 					compressed_file.addfile(info, BytesIO(data))

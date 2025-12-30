@@ -81,6 +81,24 @@
 						<td>
 							{{ location.notes }}
 						</td>
+						<td>
+							<form
+								action="/worlds/{{ world.id }}/locations/{{ location.id }}/tp"
+							>
+								<select
+									name="player-select"
+								>
+									<option
+										value="MPZinke"
+									>
+										MPZinke
+									</option>
+								</select>
+								<button>
+									Teleport
+								</button>
+							</form>
+						</td>
 					</tr>
 				{% endfor %}
 			</tbody>
