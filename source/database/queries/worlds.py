@@ -42,8 +42,8 @@ def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 		WHERE "Worlds"."id" = %s
 		ORDER BY "Worlds"."id" ASC;
 	"""
-
 	cursor.execute(query, (world_id,))
+
 	world_dict = cursor.fetchone()
 	version = Version(
 		id=world_dict["Versions.id"],
@@ -123,8 +123,8 @@ def new_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 		(%s, %s, %s, %s)
 		RETURNING "id";
 	"""
-
 	cursor.execute(query, (world.name, world.data, world.notes, world.version.id))
+
 	world.id = cursor.fetchone()["id"]
 
 
@@ -136,8 +136,8 @@ def set_world_exiting(cursor: psycopg2.extras.RealDictCursor, world: World) -> N
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.id,))
+
 	world.state = "exiting"
 
 
@@ -149,7 +149,6 @@ def set_world_port(cursor: psycopg2.extras.RealDictCursor, world: World) -> None
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.port, world.id))
 
 
@@ -161,7 +160,6 @@ def set_world_running(cursor: psycopg2.extras.RealDictCursor, world: World) -> N
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.port, world.id))
 
 
@@ -173,8 +171,8 @@ def set_world_starting(cursor: psycopg2.extras.RealDictCursor, world: World) -> 
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.id,))
+
 	world.state = "starting"
 
 
@@ -186,7 +184,6 @@ def set_world_state(cursor: psycopg2.extras.RealDictCursor, world: World) -> Non
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.state, world.id))
 
 
@@ -198,7 +195,7 @@ def set_world_stopped(cursor: psycopg2.extras.RealDictCursor, world: World) -> N
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-
 	cursor.execute(query, (world.data, world.id))
+
 	world.port = None
 	world.state = "offline"

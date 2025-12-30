@@ -29,8 +29,8 @@ def get_version(cursor: psycopg2.extras.RealDictCursor, version_id: int) -> Vers
 		WHERE "id" = %s
 		ORDER BY "Versions"."id" ASC;
 	"""
-
 	cursor.execute(query, (version_id,))
+
 	version_dict = cursor.fetchone()
 	return Version.from_dict(**version_dict)
 
@@ -42,8 +42,8 @@ def get_versions(cursor: psycopg2.extras.RealDictCursor) -> list[Version]:
 		FROM "Versions"
 		ORDER BY "Versions"."id" ASC;
 	"""
-
 	cursor.execute(query)
+
 	return list(map(lambda version_dict: Version(**version_dict), cursor))
 
 
@@ -54,6 +54,6 @@ def new_version(cursor: psycopg2.extras.RealDictCursor, version: Version) -> Non
 		(%s, %s, %s, %s)
 		RETURNING "id";
 	"""
-
 	cursor.execute(query, (version.released, version.tag, version.title, version.url))
+
 	version.id = cursor.fetchone()["id"]

@@ -39,10 +39,12 @@ from database.queries.worlds import (
 	set_world_stopped,
 )
 from docker import Container, Image
+from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
 
 
 worlds_world_blueprint = Blueprint('worlds_world_blueprint', __name__)
+worlds_world_blueprint.register_blueprint(worlds_world_commands_blueprint)
 worlds_world_blueprint.register_blueprint(worlds_world_locations_blueprint)
 
 
@@ -52,16 +54,16 @@ async def GET_worlds_world(world_id: int):
 	return await render_template("worlds/world/index.j2", world=world)
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/delete")
-async def GET_worlds_world_delete(world_id: int):
+@worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
+async def POST_worlds_world_delete(world_id: int):
 	world = get_world(world_id)
 	if(world.state == "offline"):
 		delete_world(world_id)
 	return redirect("/worlds")
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/start")
-async def GET_worlds_world_start(world_id: int):
+@worlds_world_blueprint.post("/worlds/<int:world_id>/start")
+async def POST_worlds_world_start(world_id: int):
 	world: World = get_world(world_id)
 
 	if(world.state == "offline"):
@@ -99,8 +101,8 @@ async def GET_worlds_world_state(world_id: int):
 	)
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/stop")
-async def GET_worlds_world_stop(world_id: int):
+@worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
+async def POST_worlds_world_stop(world_id: int):
 	world = get_world(world_id)
 
 	if(world.state == "running"):

@@ -102,6 +102,6 @@ def new_location(cursor: psycopg2.extras.RealDictCursor, location: World) -> Non
 		(%s, %s, %s, %s, %s)
 		RETURNING "id";
 	"""
-
 	cursor.execute(query, (location.title, location.location, location.world.id, location.biome.id, location.notes))
+
 	location.id = cursor.fetchone()["id"]

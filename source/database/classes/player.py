@@ -14,34 +14,28 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from quart import redirect, render_template, request, Blueprint
+from typing import TypeVar
 
 
-from database.classes import Player, World
-from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world
-from docker import Container
-from minecraft import get_player_location, op_player, teleport_player
+Player = TypeVar("Player")
 
 
-worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', __name__)
+class Player:
+	def __init__(
+		self,
+		id: int,
+		name: str,
+		uuid: str,
+	):
+		self.id: int = id
+		self.name: str = name
+		self.uuid: str = uuid
 
 
-@worlds_world_commands_blueprint.get("/worlds/<int:world_id>/commands")
-async def GET_worlds_world_commands(world_id: int):
-	world: World = get_world(world_id)
-	players: list[Player] = get_players()
-
-	return await render_template("worlds/world/commands.j2", world=world, players=players)
-
-
-@worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/op")
-async def POST_worlds_world_commands_op(world_id: int):
-	world: World = get_world(world_id)
-	form = await request.form
-	player_id: int = int(form["player-select"])
-	player: Player = get_player(player_id)
-
-	await op_player(Container(world), player.name)
-
-	return redirect(f"/worlds/{world_id}/commands")
+	@staticmethod
+	def from_dict(**location_dict: dict) -> Player:
+		return Player(
+			id=location_dict["id"],
+			name=location_dict["name"],
+			uuid=location_dict["uuid"],
+		)

@@ -20,9 +20,10 @@ from typing import Optional, Tuple
 from quart import redirect, render_template, request, Blueprint
 
 
-from database.classes import Biome, Location, World
+from database.classes import Biome, Location, Player, World
 from database.queries.biomes import get_biomes
 from database.queries.locations import delete_location, get_location, get_locations_for_world, new_location
+from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world
 from docker import Container
 from minecraft import get_player_location, teleport_player
@@ -42,7 +43,8 @@ async def GET_worlds_world_locations(world_id: int):
 async def GET_worlds_world_locations_new(world_id: int):
 	world: World = get_world(world_id)
 	biomes: list[Biome] = get_biomes()
-	return await render_template("worlds/world/locations/new.j2", world=world, biomes=biomes)
+	players: list[Player] = get_players()
+	return await render_template("worlds/world/locations/new.j2", biomes=biomes, players=players, world=world)
 
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/new")
@@ -51,9 +53,11 @@ async def POST_worlds_world_locations_new(world_id: int):
 	title: str = form["title-input"]
 	biome: Optional[int] = int(form["biome-select"] or "0") or None
 	notes: str = form["notes-textarea"]
-	world: World = get_world(world_id)
+	player_id: int = int(form["player-select"])
 
-	location: Tuple[int, int, int] = await get_player_location(Container(world), "MPZinke")  # TODO
+	world: World = get_world(world_id)
+	player: Player = get_player(player_id)
+	location: Tuple[int, int, int] = await get_player_location(Container(world), player.name)
 
 	location = Location(
 		id=0,
@@ -74,8 +78,8 @@ async def POST_worlds_world_locations_new(world_id: int):
 	return redirect(f"/worlds/{world_id}/locations")
 
 
-@worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/<int:location_id>/delete")
-async def GET_worlds_world_locations_location_delete(world_id: int, location_id: int):
+@worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/delete")
+async def POST_worlds_world_locations_location_delete(world_id: int, location_id: int):
 	delete_location(location_id)
 	return redirect(f"/worlds/{world_id}/locations")
 

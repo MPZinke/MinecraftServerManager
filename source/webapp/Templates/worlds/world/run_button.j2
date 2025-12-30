@@ -1,23 +1,27 @@
 
 			{% if(world.state != "offline") %}
-				<a
-					href="/worlds/{{ world.id }}/stop"
+				<form
+					action="/worlds/{{ world.id }}/stop"
+					method="POST"
+					style="margin-bottom: 0px;"
 				>
 					<button
 						style="color: #D00000;"
 					>
 						⏹
 					</button>
-				</a>
+				</form>
 			{% else %}
-				<a
-					href="/worlds/{{ world.id }}/start"
+				<form
+					action="/worlds/{{ world.id }}/start"
+					method="POST"
+					style="margin-bottom: 0px;"
 				>
 					<button
 						style="color: #00D000;"
 					>
 						▶
 					</button>
-				</a>
+				</form>
 			{% endif %}
 			

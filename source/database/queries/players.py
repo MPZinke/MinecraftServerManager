@@ -14,34 +14,32 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from quart import redirect, render_template, request, Blueprint
+import psycopg2.extras
 
 
-from database.classes import Player, World
-from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world
-from docker import Container
-from minecraft import get_player_location, op_player, teleport_player
+from database.connect import connect
+from database.classes import Player
 
 
-worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', __name__)
+@connect
+def get_player(cursor: psycopg2.extras.RealDictCursor, player_id: int) -> list[Player]:
+	query = """
+		SELECT *
+		FROM "Players"
+		WHERE "id" = %s;
+	"""
+	cursor.execute(query, (player_id,))
+
+	player_dict: dict = cursor.fetchone()
+	return Player.from_dict(**player_dict)
 
 
-@worlds_world_commands_blueprint.get("/worlds/<int:world_id>/commands")
-async def GET_worlds_world_commands(world_id: int):
-	world: World = get_world(world_id)
-	players: list[Player] = get_players()
+@connect
+def get_players(cursor: psycopg2.extras.RealDictCursor) -> list[Player]:
+	query = """
+		SELECT *
+		FROM "Players";
+	"""
+	cursor.execute(query)
 
-	return await render_template("worlds/world/commands.j2", world=world, players=players)
-
-
-@worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/op")
-async def POST_worlds_world_commands_op(world_id: int):
-	world: World = get_world(world_id)
-	form = await request.form
-	player_id: int = int(form["player-select"])
-	player: Player = get_player(player_id)
-
-	await op_player(Container(world), player.name)
-
-	return redirect(f"/worlds/{world_id}/commands")
+	return list(map(lambda player_dict: Player.from_dict(**player_dict), cursor))

@@ -84,6 +84,8 @@
 						<td>
 							<form
 								action="/worlds/{{ world.id }}/locations/{{ location.id }}/tp"
+								method="POST"
+								style="margin-bottom: 0px;"
 							>
 								<select
 									name="player-select"
@@ -96,6 +98,17 @@
 								</select>
 								<button>
 									Teleport
+								</button>
+							</form>
+						</td>
+						<td>
+							<form
+								action="/worlds/{{ world.id }}/locations/{{ location.id }}/delete"
+								method="POST"
+								style="margin-bottom: 0px;"
+							>
+								<button>
+									🗑
 								</button>
 							</form>
 						</td>

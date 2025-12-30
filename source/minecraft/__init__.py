@@ -31,13 +31,26 @@ async def get_player_location(container: Container, player: str) -> Tuple[int, i
 	analyzer = pexpect.spawn(f"docker attach {container.name}", encoding='utf-8', timeout=5)
 	analyzer.sendline(f"data get entity {player} Pos")  # FROM: https://minecraft.wiki/w/Commands/data
 
-	# EG. [15:11:07] [Server thread/INFO]: MPZinke has the following entity data: [257.30000001192093d, 93.0d, -290.06413177702524d]
+	# EG. `[15:11:07] [Server thread/INFO]: MPZinke has the following entity data: [257.30000001192093d, 93.0d, -290.06413177702524d]`
 	coodinates_regex = r"\[(?P<X>-?\d+)\.\d+d, (?P<Y>-?\d+)\.\d+d, (?P<Z>-?\d+)\.\d+d\]"
 	entity_location_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {coodinates_regex}"
 
 	await analyzer.expect(entity_location_regex, async_=True)
 	match_dict: dict = analyzer.match.groupdict()
 	return [int(match_dict["X"]), int(match_dict["Y"]), int(match_dict["Z"])]
+
+
+async def get_seed(container: Container) -> int:
+	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
+	analyzer = pexpect.spawn(f"docker attach {container.name}", encoding='utf-8', timeout=5)
+	analyzer.sendline("seed")  # FROM: https://minecraft.wiki/w/Commands/data
+
+	# EG. `[04:26:45] [Server thread/INFO]: Seed: [2817679626123392159]`
+	seed_regex = rf"{LOG_FORMAT_INFO_REGEX}: Seed: \[(?P<seed>\d+)\]"
+
+	await analyzer.expect(seed_regex, async_=True)
+	match_dict: dict = analyzer.match.groupdict()
+	return match_dict["seed"]
 
 
 async def op_player(container: Container, player: str) -> None:

@@ -13,6 +13,17 @@ CREATE TABLE "Versions"
 );
 
 
+-- ———————————————————————————————————————————————————— PLAYERS  ———————————————————————————————————————————————————— --
+
+DROP TABLE IF EXISTS "Players" CASCADE;
+CREATE TABLE "Players"
+(
+	"id" SERIAL NOT NULL PRIMARY KEY,
+	"uuid" UUID NOT NULL,
+	"name" VARCHAR(50) NOT NULL UNIQUE
+);
+
+
 -- ————————————————————————————————————————————————————— WORLDS ————————————————————————————————————————————————————— --
 
 DROP TYPE State CASCADE;

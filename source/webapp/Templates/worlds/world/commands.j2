@@ -1,0 +1,71 @@
+<html>
+	<title>
+		{{ world.name }} Commands
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt;
+		<a
+			href="/worlds/{{ world.id }}"
+		>
+			{{ world.name }}
+		</a>
+		&gt; Commands
+	</header>
+
+	<body>
+		<h1>
+			{{ world.name }} Commands
+		</h1>
+
+		<table>
+			<thead>
+				<tr>
+					<td>
+						Command
+					</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						op
+					</td>
+					<td>
+						<form
+							action="/worlds/{{ world.id }}/commands/op"
+							method="POST"
+							style="margin-bottom: 0px;"
+						>
+							<select
+								name="player-select"
+							>
+								{% for player in players %}
+									<option
+										value="{{ player.id }}"
+									>
+										{{ player.name }}
+									</option>
+								{% endfor %}
+							</select>
+							<button>
+								Execute
+							</button>
+						</form>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>
