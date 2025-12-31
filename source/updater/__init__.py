@@ -1,6 +1,7 @@
 
 
 import asyncio
+import json
 import shutil
 import subprocess
 from threading import Event, Thread
@@ -9,40 +10,43 @@ from typing import Tuple
 
 
 from database.classes import World
-from database.queries.worlds import get_running_worlds, set_world_port, set_world_state, set_world_stopped
+from database.queries.worlds import get_running_worlds, set_world_container, set_world_state, set_world_stopped
 from docker import Container
 
 
 def update_world_statuses() -> None:
+	worlds: list[World] = get_running_worlds()
 	process = subprocess.run(
 		[
 			"docker",
 			"ps",
 			"--format",
-			"{{.Names}}",
+			"json",
 		],
 		capture_output=True,
 		check=True,
 		text=True,
 	)
-	worlds: list[World] = get_running_worlds()
-
-	docker_container_names: list[str] = process.stdout.strip().split("\n")
+	containers: list[Tuple[str, str]] = list(map(json.loads, filter(None, process.stdout.strip().split("\n"))))
+	minecraft_filter = lambda container: f"service={Container.SERVICE_LABEL}" in container["Labels"].split(",")
+	minecraft_containers_iter: iter = filter(minecraft_filter, containers)
+	minecraft_container_ids: list[str] = list(map(lambda container: container["ID"], minecraft_containers_iter))
 
 	for world in worlds:
-		if(Container(world).name in docker_container_names):
+		if(world.container_id is not None and world.container_id[:12] in minecraft_container_ids):
 			print(f"Skipping world [{world.id}]{world.name}")
 			continue
 
 		print(f"Updating world [{world.id}]{world.name}")
 		try:
 			asyncio.run(world.read_data())
-			print("async ran")
 
 		except FileNotFoundError:
-			print("FileNotFoundError")
+			print("World folder not found. Resetting world.")
 			world.state = "offline"
-			set_world_port(world)
+			world.container_id = None
+			world.port = None
+			set_world_container(world)
 			set_world_state(world)
 
 		else:
@@ -58,7 +62,7 @@ def update_loop(event: Event):
 		except Exception:
 			print(traceback.format_exc())
 
-	print("Exited event loop.")
+	print("Updater stopped.")
 
 
 def start_updater() -> Tuple[Event, Thread]:

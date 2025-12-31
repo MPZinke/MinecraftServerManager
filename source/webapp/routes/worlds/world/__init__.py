@@ -34,11 +34,13 @@ from database.queries.worlds import (
 	new_world,
 	set_world_exiting,
 	set_world_running,
+	set_world_seed,
 	set_world_starting,
 	set_world_state,
 	set_world_stopped,
 )
 from docker import Container, Image
+from minecraft import get_seed
 from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
 
@@ -77,6 +79,17 @@ async def POST_worlds_world_start(world_id: int):
 
 				set_world_running(world)
 
+				if(world.seed is None):
+					for _ in range(5):
+						try:
+							world.seed: int = await get_seed(world.container_id)
+							set_world_seed(world)
+							break
+
+						except Exception:
+							print(traceback.format_exc())  # TESTING
+							await asyncio.sleep(5)
+
 			except Exception:
 				print(traceback.format_exc())
 				set_world_stopped(world)
@@ -93,9 +106,10 @@ async def GET_worlds_world_state(world_id: int):
 
 	return jsonify(
 		{
-			"run_button": await render_template("worlds/world/run_button.j2", world=world),
+			"container_id": world.container_id if(world.container_id is not None) else "-",
 			"last_played": world.last_played.strftime("%Y-%m-%d %H:%M:%S") if(world.last_played is not None) else "-",
 			"port": world.port if(world.port is not None) else "-",
+			"run_button": await render_template("worlds/world/run_button.j2", world=world),
 			"state": world.state,
 		}
 	)

@@ -20,8 +20,7 @@ from quart import redirect, render_template, request, Blueprint
 from database.classes import Player, World
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world
-from docker import Container
-from minecraft import get_player_location, op_player, teleport_player
+from minecraft import op_player
 
 
 worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', __name__)
@@ -38,10 +37,12 @@ async def GET_worlds_world_commands(world_id: int):
 @worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/op")
 async def POST_worlds_world_commands_op(world_id: int):
 	world: World = get_world(world_id)
-	form = await request.form
-	player_id: int = int(form["player-select"])
-	player: Player = get_player(player_id)
 
-	await op_player(Container(world), player.name)
+	if(world.state == "running"):
+		form = await request.form
+		player_id: int = int(form["player-select"])
+		player: Player = get_player(player_id)
+
+		await op_player(world, player.name)
 
 	return redirect(f"/worlds/{world_id}/commands")

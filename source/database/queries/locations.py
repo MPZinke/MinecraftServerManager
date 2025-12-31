@@ -38,8 +38,7 @@ def get_location(cursor: psycopg2.extras.RealDictCursor, location_id: int) -> li
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
-		WHERE "Locations"."id" = %s
-		ORDER BY "title";
+		WHERE "Locations"."id" = %s;
 	"""
 	cursor.execute(query, (location_id,))
 	location_dict: dict = cursor.fetchone()
@@ -70,8 +69,7 @@ def get_locations_for_world(cursor: psycopg2.extras.RealDictCursor, world: World
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
-		WHERE "Worlds.id" = %s
-		ORDER BY "title";
+		WHERE "Worlds.id" = %s;
 	"""
 	cursor.execute(query, (world.id,))
 

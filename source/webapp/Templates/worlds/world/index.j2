@@ -64,6 +64,7 @@
 						{{ world.version.tag }}
 					</a>
 				</td>
+			</tr>
 			<tr>
 				<td>
 					port
@@ -73,6 +74,20 @@
 				>
 					{% if world.port is not none %}
 						{{ world.port }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					container
+				</td>
+				<td
+					id="container_id-td"
+				>
+					{% if world.container_id is not none %}
+						{{ world.container_id }}
 					{% else %}
 						-
 					{% endif %}
@@ -95,6 +110,18 @@
 				>
 					{% if world.last_played is not none %}
 						{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
+					{% else %}
+						-
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					seed
+				</td>
+				<td>
+					{% if world.seed is not none %}
+						{{ world.seed }}
 					{% else %}
 						-
 					{% endif %}
@@ -140,8 +167,9 @@
 </html>
 
 <script>
-	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
+	const CONTAINER_ID_TD = document.getElementById("container_id-td");
 	const PORT_TD = document.getElementById("port-td");
+	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
 	const STATE_TD = document.getElementById("state-td");
 	const LAST_PLAYED_TD = document.getElementById("last_played-td");
 
@@ -158,9 +186,10 @@
 
 		let response_json = await response.json();
 
-		RUN_BUTTON_DIV.innerHTML = response_json.run_button;
+		CONTAINER_ID_TD.innerHTML = response_json.container_id;
 		LAST_PLAYED_TD.innerHTML = response_json.last_played;
 		PORT_TD.innerHTML = response_json.port;
+		RUN_BUTTON_DIV.innerHTML = response_json.run_button;
 		STATE_TD.innerHTML = response_json.state;
 
 		if(response_json.state == "running" || response_json.state == "offline")

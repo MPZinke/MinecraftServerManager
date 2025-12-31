@@ -129,6 +129,17 @@ def new_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 
 
 @connect
+def set_world_container(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "container_id" = %s, "port" = %s
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+	cursor.execute(query, (world.container_id, world.port, world.id))
+
+
+@connect
 def set_world_exiting(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
@@ -156,11 +167,11 @@ def set_world_port(cursor: psycopg2.extras.RealDictCursor, world: World) -> None
 def set_world_running(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "last_played" = NOW(), "port" = %s, "state" = 'running'
+		SET "container_id" = %s, "last_played" = NOW(), "port" = %s, "state" = 'running'
 		WHERE "id" = %s
 		RETURNING *;
 	"""
-	cursor.execute(query, (world.port, world.id))
+	cursor.execute(query, (world.container_id, world.port, world.id))
 
 
 @connect
@@ -174,6 +185,17 @@ def set_world_starting(cursor: psycopg2.extras.RealDictCursor, world: World) -> 
 	cursor.execute(query, (world.id,))
 
 	world.state = "starting"
+
+
+@connect
+def set_world_seed(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "seed" = %s
+		WHERE "id" = %s
+		RETURNING *;
+	"""
+	cursor.execute(query, (world.seed, world.id))
 
 
 @connect
@@ -191,7 +213,7 @@ def set_world_state(cursor: psycopg2.extras.RealDictCursor, world: World) -> Non
 def set_world_stopped(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "data" = %s, "port" = NULL, "state" = 'offline'
+		SET "container_id" = NULL, "data" = %s, "port" = NULL, "state" = 'offline'
 		WHERE "id" = %s
 		RETURNING *;
 	"""

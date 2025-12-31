@@ -15,13 +15,7 @@ __author__ = "MPZinke"
 
 
 import asyncio
-from io import BytesIO
-from pathlib import Path
-import shutil
 import socket
-import subprocess
-import tarfile
-from typing import Optional
 
 
 from database.classes import World
@@ -29,13 +23,11 @@ from docker.image import Image
 
 
 class Container:
-	EXITED = "exited"
-	PAUSED = "paused"
+	SERVICE_LABEL = "managed-minecraft-server"
 	RUNNING = "running"
 
 
 	def __init__(self, world: World):
-		self.name: str = f"minecraft-{world.id}"
 		self.world: World = world
 
 
@@ -67,8 +59,8 @@ class Container:
 			"--interactive",
 			"--rm",
 			"--tty",
-			"--name",
-			self.name,
+			"--label",
+			f"service={self.SERVICE_LABEL}",
 			"--publish",
 			f"{self.world.port}:25565",
 			"--volume",
@@ -78,9 +70,11 @@ class Container:
 			stderr=asyncio.subprocess.PIPE,
 			stdout=asyncio.subprocess.PIPE,
 		)
-		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
 		if(process.returncode != 0):
 			raise Exception(f"Failed to run docker container with stderr: {stderr}")
+
+		self.world.container_id = stdout
 
 
 	async def state(self) -> str:
@@ -89,7 +83,7 @@ class Container:
 			"ps",
 			"--all",
 			"--filter",
-			f"name={self.name}",
+			f"id={self.world.container_id}",
 			"--format",
 			"{{.State}}",
 			stderr=asyncio.subprocess.PIPE,
@@ -106,7 +100,7 @@ class Container:
 		process = await asyncio.create_subprocess_exec(
 			"docker",
 			"stop",
-			self.name,
+			self.world.container_id,
 			stderr=asyncio.subprocess.PIPE,
 			stdout=asyncio.subprocess.PIPE,
 		)

@@ -40,22 +40,26 @@ class World:
 	def __init__(
 		self,
 		id: int,
+		container_id: Optional[str],
 		created: datetime,
 		data: bytes,
 		last_played: datetime,
 		name: str,
 		notes: str,
 		port: Optional[int],
+		seed: int,
 		state: Optional[str],
 		version: Version,
 	):
 		self.id: int = id
+		self.container_id: Optional[str] = container_id
 		self.created: datetime = created
 		self.data: bytes = data
 		self.last_played: datetime = last_played
 		self.name: str = name
 		self.notes: str = notes
 		self.port: Optional[int] = port
+		self.seed: Optional[int] = seed
 		self.state: Optional[str] = state
 		self.version: Version = version
 
@@ -66,12 +70,14 @@ class World:
 	def from_dict(**world_dict: dict) -> World:
 		return World(
 			id=world_dict["id"],
+			container_id=world_dict["container_id"],
 			created=world_dict["created"],
 			data=world_dict["data"],
 			last_played=world_dict["last_played"],
 			name=world_dict["name"],
 			notes=world_dict["notes"],
 			port=world_dict["port"],
+			seed=world_dict["seed"],
 			state=world_dict["state"],
 			version=world_dict["version"],
 		)
