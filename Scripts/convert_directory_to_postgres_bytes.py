@@ -46,7 +46,7 @@ def read_data(data_path: Path) -> None:
 def main():
 	path = Path(sys.argv[1])
 	data: bytes = read_data(path)
-	# print(f"'\\x{data.hex()}'::BYTEA")
+	print(f"'\\x{data.hex()}'::BYTEA")
 
 
 main()

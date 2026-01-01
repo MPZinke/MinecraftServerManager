@@ -14,7 +14,8 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from typing import Tuple
+import asyncio
+from typing import Optional, Tuple
 
 
 import pexpect
@@ -40,23 +41,33 @@ async def get_player_location(container_id: str, player: str) -> Tuple[int, int,
 	return [int(match_dict["X"]), int(match_dict["Y"]), int(match_dict["Z"])]
 
 
-async def get_seed(container_id: str) -> int:
+async def get_seed(container_id: str) -> Optional[int]:
 	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-	analyzer.sendline("seed")  # FROM: https://minecraft.wiki/w/Commands/data
+	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=30)
 
+	# Wait for server to fully start.
+	# EG. `[18:53:08] [Server thread/INFO]: Done (0.250s)! For help, type "help"`
+	server_start_regex = rf"{LOG_FORMAT_INFO_REGEX}: Done \(\d+\.\d+s\)! For help, type \"help\""
+	await analyzer.expect([server_start_regex, pexpect.TIMEOUT], async_=True)
+
+	analyzer.sendline("seed")  # FROM: https://minecraft.fandom.com/wiki/Commands/seed
 	# EG. `[04:26:45] [Server thread/INFO]: Seed: [2817679626123392159]`
-	seed_regex = rf"{LOG_FORMAT_INFO_REGEX}: Seed: \[(?P<seed>\d+)\]"
+	seed_regex = rf"{LOG_FORMAT_INFO_REGEX}: Seed: \[(?P<seed>-?\d+)\]"
+	expect_regexes = [seed_regex, pexpect.TIMEOUT]
+	index: int = await analyzer.expect(expect_regexes, async_=True)
 
-	await analyzer.expect(seed_regex, async_=True)
-	match_dict: dict = analyzer.match.groupdict()
-	return match_dict["seed"]
+	match(expect_regexes[index]):
+		case(str(seed_regex)):
+			return analyzer.match.groupdict()["seed"]
+
+		case(pexpect.TIMEOUT):
+			return None
 
 
 async def op_player(container_id: str, player: str) -> None:
 	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
 	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-	analyzer.sendline(f"op {player}")
+	analyzer.sendline(f"op {player}")  # FROM: https://minecraft.fandom.com/wiki/Commands/op
 
 	# EG. `[22:38:32] [Server thread/INFO]: Made MPZinke a server operator`
 	op_regex = rf"{LOG_FORMAT_INFO_REGEX}: Made {player} a server operator"
@@ -64,9 +75,23 @@ async def op_player(container_id: str, player: str) -> None:
 	await analyzer.expect(op_regex, async_=True)
 
 
+async def stop_server(container_id: str) -> bool:
+	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
+	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=30)
+	analyzer.sendline("stop")  # FROM: https://minecraft.fandom.com/wiki/Commands/stop
+
+	# EG. `[17:40:06] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved`
+	stop_regex = rf"{LOG_FORMAT_INFO_REGEX}: ThreadedAnvilChunkStorage: All dimensions are saved"
+	expect_regexes = [stop_regex, pexpect.TIMEOUT]
+
+	index: int = await analyzer.expect(expect_regexes, async_=True)
+	return expect_regexes[index] == stop_regex
+
+
 async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int]) -> None:
 	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
 	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
+	# FROM: https://minecraft.fandom.com/wiki/Commands/tp
 	analyzer.sendline(f"tp {player} {location[0]} {location[1]} {location[2]}")
 
 	# EG. `[22:56:10] [Server thread/INFO]: Teleported MPZinke to 2.500000, 88.000000, 11.500000`

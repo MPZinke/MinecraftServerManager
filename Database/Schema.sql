@@ -31,7 +31,7 @@ CREATE TYPE State AS ENUM (
 	'offline',  -- Not building/starting and no docker container.
 	'starting',  -- Image built, starting the docker container.
 	'running',  -- Running the docker container.
-	'exiting'  -- The docker container is paused.
+	'stopping'  -- The docker container as shutting down.
 );
 
 

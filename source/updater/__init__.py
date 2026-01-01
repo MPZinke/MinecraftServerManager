@@ -10,8 +10,9 @@ from typing import Tuple
 
 
 from database.classes import World
-from database.queries.worlds import get_running_worlds, set_world_container, set_world_state, set_world_stopped
+from database.queries.worlds import get_running_worlds, set_world_container, set_world_state, set_world_offline
 from docker import Container
+from logger import logger
 
 
 def update_world_statuses() -> None:
@@ -34,15 +35,15 @@ def update_world_statuses() -> None:
 
 	for world in worlds:
 		if(world.container_id is not None and world.container_id[:12] in minecraft_container_ids):
-			print(f"Skipping world [{world.id}]{world.name}")
+			logger.info(f"Skipping world {world.name}")
 			continue
 
-		print(f"Updating world [{world.id}]{world.name}")
+		logger.info(f"Updating world {world.name}")
 		try:
 			asyncio.run(world.read_data())
 
 		except FileNotFoundError:
-			print("World folder not found. Resetting world.")
+			logger.info(f"World folder '{world._data_path!s}' not found. Resetting world.")
 			world.state = "offline"
 			world.container_id = None
 			world.port = None
@@ -50,7 +51,7 @@ def update_world_statuses() -> None:
 			set_world_state(world)
 
 		else:
-			set_world_stopped(world)
+			set_world_offline(world)
 			shutil.rmtree(world._data_path)
 
 
@@ -60,9 +61,9 @@ def update_loop(event: Event):
 			update_world_statuses()
 
 		except Exception:
-			print(traceback.format_exc())
+			logger.error(traceback.format_exc())
 
-	print("Updater stopped.")
+	logger.info("Updater stopped.")
 
 
 def start_updater() -> Tuple[Event, Thread]:

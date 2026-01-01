@@ -32,15 +32,16 @@ from database.queries.worlds import (
 	get_world,
 	get_worlds,
 	new_world,
-	set_world_exiting,
+	set_world_stopping,
 	set_world_running,
 	set_world_seed,
 	set_world_starting,
 	set_world_state,
-	set_world_stopped,
+	set_world_offline,
 )
 from docker import Container, Image
-from minecraft import get_seed
+from logger import logger
+from minecraft import get_seed, stop_server
 from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
 
@@ -79,21 +80,14 @@ async def POST_worlds_world_start(world_id: int):
 
 				set_world_running(world)
 
-				if(world.seed is None):
-					for _ in range(5):
-						try:
-							world.seed: int = await get_seed(world.container_id)
-							set_world_seed(world)
-							break
-
-						except Exception:
-							print(traceback.format_exc())  # TESTING
-							await asyncio.sleep(5)
-
 			except Exception:
-				print(traceback.format_exc())
-				set_world_stopped(world)
+				logger.error(traceback.format_exc())
+				set_world_offline(world)
 				raise
+
+			if(world.seed is None):
+				world.seed: int = await get_seed(world.container_id)
+				set_world_seed(world)
 
 		asyncio.create_task(start_world())
 
@@ -120,20 +114,21 @@ async def POST_worlds_world_stop(world_id: int):
 	world = get_world(world_id)
 
 	if(world.state == "running"):
-		set_world_exiting(world)
+		set_world_stopping(world)
 
 		async def stop_world():
-			container = Container(world)
 			try:
-				await container.stop()
+				if(not await stop_server(world.container_id)):  # Graceful shutdown.
+					await Container(world).stop()  # Risky shutdown
+
 			except Exception:
 				world.state = "running"
 				set_world_state(world)
-				print(traceback.format_exc())
+				logger.error(traceback.format_exc())
 				return
 
 			await world.read_data()
-			set_world_stopped(world)
+			set_world_offline(world)
 			shutil.rmtree(world._data_path)
 
 		asyncio.create_task(stop_world())

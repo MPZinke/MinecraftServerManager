@@ -20,6 +20,7 @@ import socket
 
 from database.classes import World
 from docker.image import Image
+from logger import logger
 
 
 class Container:
@@ -34,7 +35,7 @@ class Container:
 	async def run(self):
 		image = Image(self.world.version)
 		if(not await image.exists()):
-			print("Image does not exist. Building it now.")
+			logger.info("Image does not exist. Building it now.")
 			await image.build()
 
 		# Get an available port.
@@ -48,8 +49,11 @@ class Container:
 			sock.bind(("localhost", 0))
 			self.world.port: int = sock.getsockname()[1]
 
+		logger.info(f"Allocated port {self.world.port} for world '{self.world.name}'.")
+
 		command_args: list[str] = []  # Default to preexisting command_args
 		if(self.world.last_played is None):
+			logger.info("Adding bonus chest.")
 			command_args.append("--bonusChest")
 
 		process = await asyncio.create_subprocess_exec(
@@ -75,6 +79,7 @@ class Container:
 			raise Exception(f"Failed to run docker container with stderr: {stderr}")
 
 		self.world.container_id = stdout
+		logger.info(f"Started container {self.world.container_id}.")
 
 
 	async def state(self) -> str:
@@ -107,3 +112,5 @@ class Container:
 		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
 		if(process.returncode != 0):
 			raise Exception(f"Failed to stop docker container with stderr: {stderr}")
+
+		logger.info(f"Stopped container {self.world.container_id}")
