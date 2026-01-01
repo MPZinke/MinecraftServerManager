@@ -40,8 +40,8 @@ from database.queries.worlds import (
 	set_world_offline,
 )
 from docker import Container, Image
+from docker.minecraft import get_seed, stop_server
 from logger import logger
-from minecraft import get_seed, stop_server
 from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
 

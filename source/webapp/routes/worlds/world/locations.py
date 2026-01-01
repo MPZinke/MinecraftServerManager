@@ -25,8 +25,7 @@ from database.queries.biomes import get_biomes
 from database.queries.locations import delete_location, get_location, get_locations_for_world, new_location
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world
-from docker import Container
-from minecraft import get_player_location, teleport_player
+from docker.minecraft import get_player_location, teleport_player
 
 
 worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)

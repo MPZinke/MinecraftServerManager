@@ -20,7 +20,7 @@ from quart import redirect, render_template, request, Blueprint
 from database.classes import Player, World
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world
-from minecraft import op_player
+from docker.minecraft import op_player
 
 
 worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', __name__)

@@ -14,14 +14,10 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import asyncio
 from typing import Optional, Tuple
 
 
 import pexpect
-
-
-from docker import Container
 
 
 LOG_FORMAT_INFO_REGEX = r"\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[Server thread/INFO\]"
@@ -57,7 +53,7 @@ async def get_seed(container_id: str) -> Optional[int]:
 	index: int = await analyzer.expect(expect_regexes, async_=True)
 
 	match(expect_regexes[index]):
-		case(str(seed_regex)):
+		case(str() as seed_regex):
 			return analyzer.match.groupdict()["seed"]
 
 		case(pexpect.TIMEOUT):
