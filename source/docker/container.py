@@ -15,12 +15,47 @@ __author__ = "MPZinke"
 
 
 import asyncio
+import os
+import re
 import socket
 
 
 from database.classes import World
 from docker.image import Image
 from logger import logger
+
+
+async def get_available_port() -> None:
+	if(os.getenv("DOCKER") != "true"):
+		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+			if(s.connect_ex(('', 25565)) != 0):
+				return 25565
+
+		# FROM: https://stackoverflow.com/a/1365284
+		sock = socket.socket()
+		sock.bind(("localhost", 0))
+		return sock.getsockname()[1]
+
+	port_window_size = 10
+	for starting_port in range(25565, 65536, port_window_size):
+		process = await asyncio.create_subprocess_exec(
+			"nc",
+			"-zv",
+			"host.docker.internal",
+			f"{starting_port}–{starting_port+port_window_size}",
+			stderr=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.PIPE,
+		)
+		_, stderr = map(lambda io: io.decode().strip(), await process.communicate())
+
+		# EG. `host.docker.internal [192.168.65.254] 25565 (?) open`
+		port_match_regex = r"host\.docker\.internal \[\d+\.\d+\.\d+\.\d+\] (\d+) \(\?\) open"
+		occupied_ports: list[int] = list(map(int, re.findall(port_match_regex, stderr)))
+		for port in range(starting_port, starting_port+port_window_size):
+			if(port not in occupied_ports):
+				return port
+
+	raise Exception("No available port found.")
 
 
 class Container:
@@ -39,16 +74,7 @@ class Container:
 			await image.build()
 
 		# Get an available port.
-		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-			if(s.connect_ex(('', 25565)) != 0):
-				self.world.port: int = 25565
-
-		if(self.world.port is None):
-			# FROM: https://stackoverflow.com/a/1365284
-			sock = socket.socket()
-			sock.bind(("localhost", 0))
-			self.world.port: int = sock.getsockname()[1]
-
+		self.world.port = await get_available_port()
 		logger.info(f"Allocated port {self.world.port} for world '{self.world.name}'.")
 
 		command_args: list[str] = []  # Default to preexisting command_args
@@ -61,7 +87,7 @@ class Container:
 			"run",
 			"--detach",
 			"--interactive",
-			"--rm",
+			# "--rm",
 			"--tty",
 			"--label",
 			f"service={self.SERVICE_LABEL}",

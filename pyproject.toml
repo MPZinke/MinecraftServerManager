@@ -1,13 +1,13 @@
 [project]
 name = "MinecraftServerManager"
-version = "0.0.1"
+version = "0.9.0"
 authors = [{name="Mathew Zinke"}]
 description = "A service to automatically save & run Minecraft servers."
 dependencies = [
 	"aiofiles==25.1.0",
 	"aiohttp==3.13.2",
 	"quart==0.20.0",
-	"pexpect-4.9.0",
+	"pexpect==4.9.0",
 	"psycopg2==2.9.11",
 	"uvicorn==0.40.0"
 ]

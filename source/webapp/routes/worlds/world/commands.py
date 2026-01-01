@@ -43,6 +43,6 @@ async def POST_worlds_world_commands_op(world_id: int):
 		player_id: int = int(form["player-select"])
 		player: Player = get_player(player_id)
 
-		await op_player(world, player.name)
+		await op_player(world.container_id, player.name)
 
 	return redirect(f"/worlds/{world_id}/commands")

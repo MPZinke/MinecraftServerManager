@@ -3,6 +3,7 @@
 import logging
 
 
+# FROM: https://stackoverflow.com/a/57820456
 _log_record_factory = logging.getLogRecordFactory()
 def _custom_factory(*args, **kwargs):
 	record = _log_record_factory(*args, **kwargs)

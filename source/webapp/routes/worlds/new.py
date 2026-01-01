@@ -39,11 +39,13 @@ async def POST_worlds_new():
 	world = World(
 		id=0,
 		created=None,
+		container_id=None,
 		data=data or None,
 		last_played=None,
 		name=form["name-input"],
 		notes=form["notes-input"],
 		port=None,
+		seed=None,
 		state='clean',
 		version=Version(
 			id=int(form["version_id-select"]),

@@ -6,15 +6,21 @@ services:
     build:
       dockerfile: ./Dockerfile
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - MINECRAFT_DB_HOST=host.docker.internal
+      - MINECRAFT_DB_USER=${MINECRAFT_DB_USER}
+      - MINECRAFT_DB_PASSWORD=${MINECRAFT_DB_PASSWORD}
+      - DOCKER=true
+      - USER=${USER}
     ports:
       - 443:443
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/${USER}/Gaming/Minecraft/Worlds:/Users/${USER}/Gaming/Minecraft/Worlds
     restart: "unless-stopped"
     tty: true
+
+volumes:
+  minecraft-servers:
+    external: true

@@ -15,6 +15,7 @@ __author__ = "MPZinke"
 
 
 from datetime import datetime
+import getpass
 from io import BytesIO
 import os
 from pathlib import Path
@@ -37,6 +38,9 @@ def raise_exception(exception: Exception):
 
 
 class World:
+	WORLDS_DATA_PATH = Path(f"/Users/{os.environ["USER"]}/Gaming/Minecraft/Worlds")
+
+
 	def __init__(
 		self,
 		id: int,
@@ -63,7 +67,7 @@ class World:
 		self.state: Optional[str] = state
 		self.version: Version = version
 
-		self._data_path: Path = Path(os.getenv("DATA_PATH"), f"world-{self.id}")
+		self._data_path: Path = self.WORLDS_DATA_PATH / f"world-{self.id}"
 
 
 	@staticmethod
