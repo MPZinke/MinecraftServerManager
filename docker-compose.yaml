@@ -1,8 +1,8 @@
 version: "3"
 services:
   minecraft-server:
-    container_name: minecraft-server
-    image: minecraft-server:${VERSION}
+    container_name: minecraft-server-manager
+    image: minecraft-server-manager:${VERSION}
     build:
       dockerfile: ./Dockerfile
     environment:
