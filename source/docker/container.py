@@ -87,7 +87,7 @@ class Container:
 			"run",
 			"--detach",
 			"--interactive",
-			# "--rm",
+			"--rm",
 			"--tty",
 			"--label",
 			f"service={self.SERVICE_LABEL}",

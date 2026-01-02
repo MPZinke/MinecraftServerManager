@@ -20,7 +20,3 @@ services:
       - /Users/${USER}/Gaming/Minecraft/Worlds:/Users/${USER}/Gaming/Minecraft/Worlds
     restart: "unless-stopped"
     tty: true
-
-volumes:
-  minecraft-servers:
-    external: true
