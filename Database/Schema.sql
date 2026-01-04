@@ -87,7 +87,7 @@ DROP TABLE IF EXISTS "Biomes" CASCADE;
 CREATE TABLE "Biomes"
 (
 	"id" SERIAL NOT NULL PRIMARY KEY,
-	"dimension" Dimension NOT NULL,
+	"dimension" Dimension NOT NULL DEFAULT 'overworld',
 	"title" TEXT NOT NULL UNIQUE,
 	"description" TEXT
 );
