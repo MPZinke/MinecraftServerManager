@@ -23,18 +23,31 @@ import pexpect
 LOG_FORMAT_INFO_REGEX = r"\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[Server thread/INFO\]"
 
 
-async def get_player_location(container_id: str, player: str) -> Tuple[int, int, int]:
+async def get_player_location(container_id: str, player: str) -> Tuple[str, Tuple[int, int, int]]:
 	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
 	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-	analyzer.sendline(f"data get entity {player} Pos")  # FROM: https://minecraft.wiki/w/Commands/data
 
+	# Dimension.
+	analyzer.sendline(f"data get entity {player} Dimension")  # FROM: https://minecraft.wiki/w/Commands/data
+	# EG. `[21:18:23] [Server thread/INFO]: MPZinke has the following entity data: "minecraft:overworld"`
+	dimension_regex = r"\"minecraft:(?P<dimension>[_\w]+)\""
+	entity_dimension_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {dimension_regex}"
+
+	await analyzer.expect(entity_dimension_regex, async_=True)
+	match_dict: dict = analyzer.match.groupdict()
+	dimension = match_dict["dimension"]
+
+	# Location.
+	analyzer.sendline(f"data get entity {player} Pos")  # FROM: https://minecraft.wiki/w/Commands/data
 	# EG. `[15:11:07] [Server thread/INFO]: MPZinke has the following entity data: [257.30000001192093d, 93.0d, -290.06413177702524d]`
-	coodinates_regex = r"\[(?P<X>-?\d+)\.\d+d, (?P<Y>-?\d+)\.\d+d, (?P<Z>-?\d+)\.\d+d\]"
-	entity_location_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {coodinates_regex}"
+	location_regex = r"\[(?P<X>-?\d+)\.\d+d, (?P<Y>-?\d+)\.\d+d, (?P<Z>-?\d+)\.\d+d\]"
+	entity_location_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {location_regex}"
 
 	await analyzer.expect(entity_location_regex, async_=True)
 	match_dict: dict = analyzer.match.groupdict()
-	return [int(match_dict["X"]), int(match_dict["Y"]), int(match_dict["Z"])]
+	location = [int(match_dict["X"]), int(match_dict["Y"]), int(match_dict["Z"])]
+
+	return dimension, location
 
 
 async def get_seed(container_id: str) -> Optional[int]:
@@ -84,11 +97,13 @@ async def stop_server(container_id: str) -> bool:
 	return expect_regexes[index] == stop_regex
 
 
-async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int]) -> None:
+async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int], world: str) -> None:
 	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
 	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
+
+	location_string: str = " ".join(map(str, location))
 	# FROM: https://minecraft.fandom.com/wiki/Commands/tp
-	analyzer.sendline(f"tp {player} {location[0]} {location[1]} {location[2]}")
+	analyzer.sendline(f"execute in {world} run tp {player} {location_string}")
 
 	# EG. `[22:56:10] [Server thread/INFO]: Teleported MPZinke to 2.500000, 88.000000, 11.500000`
 	tp_regex = rf"{LOG_FORMAT_INFO_REGEX}: Teleported MPZinke to .*"

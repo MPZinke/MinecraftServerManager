@@ -75,11 +75,11 @@ FOR EACH ROW EXECUTE PROCEDURE DefaultWorldValues();
 
 -- ————————————————————————————————————————————————————— BIOMES ————————————————————————————————————————————————————— --
 
-DROP TYPE World CASCADE;
-CREATE TYPE World AS ENUM (
-	'Overworld',
-	'Nether',
-	'End'
+DROP TYPE Dimension CASCADE;
+CREATE TYPE Dimension AS ENUM (
+	'overworld',
+	'the_nether',
+	'the_end'
 );
 
 
@@ -87,7 +87,7 @@ DROP TABLE IF EXISTS "Biomes" CASCADE;
 CREATE TABLE "Biomes"
 (
 	"id" SERIAL NOT NULL PRIMARY KEY,
-	"world" World NOT NULL,
+	"dimension" Dimension NOT NULL,
 	"title" TEXT NOT NULL UNIQUE,
 	"description" TEXT
 );
@@ -101,7 +101,8 @@ CREATE TABLE "Locations"
 	"id" SERIAL NOT NULL PRIMARY KEY,
 	"title" TEXT NOT NULL,
 	"location" INT[3] NOT NULL,
-	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE,
+	"dimension" Dimension NOT NULL DEFAULT 'overworld',
 	"Biomes.id" INT DEFAULT NULL REFERENCES "Biomes"("id") ON DELETE CASCADE,
+	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE,
 	"notes" TEXT NOT NULL DEFAULT ''
 );

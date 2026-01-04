@@ -57,18 +57,21 @@ async def POST_worlds_world_locations_new(world_id: int):
 		player_id: int = int(form["player-select"])
 
 		player: Player = get_player(player_id)
-		location: Tuple[int, int, int] = await get_player_location(world.container_id, player.name)
+
+		dimension, location = await get_player_location(world.container_id, player.name)  # str, Tuple[int, int, int]
+		print(f"dimension: {dimension}")
 
 		location = Location(
 			id=0,
 			title=title,
+			dimension=dimension,
 			location=location,
 			notes=notes,
 			world=world,
 			biome=Biome(
 				id=biome,
+				dimension=None,
 				title=None,
-				world=None,
 				description=None,
 			),
 		)
@@ -89,6 +92,6 @@ async def POST_worlds_world_locations_location_tp(world_id: int, location_id: in
 	world: World = get_world(world_id)
 	location: Location = get_location(location_id)
 
-	await teleport_player(world.container_id, "MPZinke", location.location)
+	await teleport_player(world.container_id, "MPZinke", location.location, location.dimension)
 
 	return redirect(f"/worlds/{world_id}/locations")

@@ -28,6 +28,7 @@ class Location:
 		id: int,
 		title: str,
 		location: Tuple[float, float, float],
+		dimension: str,
 		world: World,
 		biome: Biome,
 		notes: str,
@@ -35,6 +36,7 @@ class Location:
 		self.id: int = id
 		self.title: str = title
 		self.location: Tuple[float, float, float] = location
+		self.dimension: str = dimension
 		self.world: World = world
 		self.biome: Biome = biome
 		self.notes: str = notes
@@ -46,6 +48,7 @@ class Location:
 			id=location_dict["id"],
 			title=location_dict["title"],
 			location=location_dict["location"],
+			dimension=location_dict["dimension"],
 			world=location_dict["world"],
 			biome=location_dict["biome"],
 			notes=location_dict["notes"],

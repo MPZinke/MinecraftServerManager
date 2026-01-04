@@ -33,7 +33,7 @@ def get_location(cursor: psycopg2.extras.RealDictCursor, location_id: int) -> li
 		SELECT
 			"Locations".*,
 			"Biomes"."id" AS "Biomes.id",
-			"Biomes"."world" AS "Biomes.world",
+			"Biomes"."dimension" AS "Biomes.dimension",
 			"Biomes"."title" AS "Biomes.title",
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
@@ -43,19 +43,14 @@ def get_location(cursor: psycopg2.extras.RealDictCursor, location_id: int) -> li
 	cursor.execute(query, (location_id,))
 	location_dict: dict = cursor.fetchone()
 
-	return Location.from_dict(
-		id=location_dict["id"],
-		title=location_dict["title"],
-		location=location_dict["location"],
-		notes=location_dict["notes"],
-		world=None,
-		biome=Biome(
-			id=location_dict["Biomes.id"],
-			world=location_dict["Biomes.world"],
-			title=location_dict["Biomes.title"],
-			description=location_dict["Biomes.description"],
-		),
+	biome = Biome(
+		id=location_dict["Biomes.id"],
+		dimension=location_dict["Biomes.dimension"],
+		title=location_dict["Biomes.title"],
+		description=location_dict["Biomes.description"],
 	)
+
+	return Location.from_dict(world=None, biome=biome, **location_dict,)
 
 
 @connect
@@ -64,7 +59,7 @@ def get_locations_for_world(cursor: psycopg2.extras.RealDictCursor, world: World
 		SELECT
 			"Locations".*,
 			"Biomes"."id" AS "Biomes.id",
-			"Biomes"."world" AS "Biomes.world",
+			"Biomes"."dimension" AS "Biomes.dimension",
 			"Biomes"."title" AS "Biomes.title",
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
@@ -75,31 +70,26 @@ def get_locations_for_world(cursor: psycopg2.extras.RealDictCursor, world: World
 
 	locations: list[Location] = []
 	for location_dict in cursor:
-		locations.append(
-			Location.from_dict(
-				id=location_dict["id"],
-				title=location_dict["title"],
-				location=location_dict["location"],
-				notes=location_dict["notes"],
-				world=world,
-				biome=Biome(
-					id=location_dict["Biomes.id"],
-					world=location_dict["Biomes.world"],
-					title=location_dict["Biomes.title"],
-					description=location_dict["Biomes.description"],
-				),
-			)
+		biome = Biome(
+			id=location_dict["Biomes.id"],
+			dimension=location_dict["Biomes.dimension"],
+			title=location_dict["Biomes.title"],
+			description=location_dict["Biomes.description"],
 		)
+		locations.append(Location.from_dict(world=world, biome=biome, **location_dict))
 	return locations
 
 
 @connect
 def new_location(cursor: psycopg2.extras.RealDictCursor, location: World) -> None:
 	query = """
-		INSERT INTO "Locations" ("title", "location", "Worlds.id", "Biomes.id", "notes") VALUES
-		(%s, %s, %s, %s, %s)
+		INSERT INTO "Locations" ("title", "dimension", "location", "Worlds.id", "Biomes.id", "notes") VALUES
+		(%s, %s, %s, %s, %s, %s)
 		RETURNING "id";
 	"""
-	cursor.execute(query, (location.title, location.location, location.world.id, location.biome.id, location.notes))
+	cursor.execute(
+		query,
+		(location.title, location.dimension, location.location, location.world.id, location.biome.id, location.notes),
+	)
 
 	location.id = cursor.fetchone()["id"]

@@ -25,12 +25,12 @@ class Biome:
 		self,
 		id: int,
 		title: str,
-		world: str,
+		dimension: str,
 		description: str,
 	):
 		self.id: int = id
 		self.title: str = title
-		self.world: str = world
+		self.dimension: str = dimension
 		self.description: str = description
 
 
@@ -39,6 +39,6 @@ class Biome:
 		return Biome(
 			id=location_dict["id"],
 			title=location_dict["title"],
-			world=location_dict["world"],
+			dimension=location_dict["dimension"],
 			description=location_dict["description"],
 		)

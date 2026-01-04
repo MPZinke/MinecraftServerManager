@@ -37,28 +37,21 @@
 			</button>
 		</a>
 
-		<table
-		  class="table table-dark table-striped"
-		>
+		<table>
 			<thead>
-				<th
-				  class="col-md-3"
-				>
+				<th>
 					Title
 				</th>
-				<th
-				  class="col-md-2"
-				>
+				<th>
 					Location
 				</th>
-				<th
-				  class="col-md-2"
-				>
+				<th>
+					Dimension
+				</th>
+				<th>
 					Biome
 				</th>
-				<th
-				  class="col-md-5"
-				>
+				<th>
 					Notes
 				</th>
 			</thead>
@@ -70,6 +63,9 @@
 						</td>
 						<td>
 							{{ location.location[0] }}, {{ location.location[1] }}, {{ location.location[2] }}
+						</td>
+						<td>
+							{{ location.dimension.replace("_", " ").title() }}
 						</td>
 						<td>
 							{% if location.biome.title is not none %}
