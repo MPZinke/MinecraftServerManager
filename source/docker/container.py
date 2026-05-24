@@ -21,11 +21,16 @@ import socket
 
 
 from database.classes import World
+from docker.api import request_json
 from docker.image import Image
 from logger import logger
 
 
 async def get_available_port() -> None:
+	"""
+	Get an available port either on the local system or from the docker host.
+	"""
+	# If running locally, get a local port.
 	if(os.getenv("DOCKER") != "true"):
 		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			if(s.connect_ex(('', 25565)) != 0):
@@ -95,7 +100,7 @@ class Container:
 			f"{self.world.port}:25565",
 			"--volume",
 			f"{self.world._data_path}:/usr/app",
-			image.reference,
+			image.tag,
 			*command_args,
 			stderr=asyncio.subprocess.PIPE,
 			stdout=asyncio.subprocess.PIPE,
@@ -108,35 +113,13 @@ class Container:
 		logger.info(f"Started container {self.world.container_id}.")
 
 
-	async def state(self) -> str:
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"ps",
-			"--all",
-			"--filter",
-			f"id={self.world.container_id}",
-			"--format",
-			"{{.State}}",
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to check docker container with stderr: {stderr}")
-
-		return stdout
-
-
 	async def stop(self) -> None:
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"stop",
-			self.world.container_id,
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to stop docker container with stderr: {stderr}")
+		"""
+		Stop this container.
+		"""
+		try:
+			await request_json(f"containers/{self.world.container_id}/stop", method="POST")
+			logger.info(f"Stopped container {self.world.container_id}")
 
-		logger.info(f"Stopped container {self.world.container_id}")
+		except Exception as cause:
+			raise Exception(f"Failed to stop docker container.") from cause

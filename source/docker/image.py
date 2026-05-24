@@ -15,7 +15,9 @@ __author__ = "MPZinke"
 
 
 import asyncio
+from io import BytesIO
 from pathlib import Path
+import tarfile
 
 
 import aiofiles
@@ -23,86 +25,72 @@ import aiohttp
 
 
 from database.classes import Version
+from docker.api import request_json
 
 
 class Image:
 	DOCKERFILE = (
-		"""FROM openjdk:27-ea-slim\n"""
-		"""COPY ./server.jar /usr/games/server.jar\n"""
-		"""WORKDIR /usr/app/\n"""
-		"""EXPOSE 25565\n"""
-		"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "/usr/games/server.jar", "nogui"]\n"""
-		"""CMD []\n"""
+		b"""FROM openjdk:27-ea-slim\n"""
+		b"""COPY ./server.jar /usr/games/server.jar\n"""
+		b"""WORKDIR /usr/app/\n"""
+		b"""EXPOSE 25565\n"""
+		b"""ENTRYPOINT ["java", "-Xmx1024M", "-Xms1024M", "-jar", "/usr/games/server.jar", "nogui"]\n"""
+		b"""CMD []\n"""
 	)
-	REFERENCE_FORMAT = "minecraft:{version}"
+	TAG_FORMAT = "minecraft:{version.tag}"
 
 
 	def __init__(self, version: Version):
-		self.reference: str = self.REFERENCE_FORMAT.format(version=version.tag)
+		self.tag: str = self.TAG_FORMAT.format(version=version)
 		self.version: Version = version
 
 
 	async def build(self) -> None:
-		# Create build directory.
-		build_folder = Path(f"/tmp/minecraft_build-{self.version.tag}")
-		if(not build_folder.exists()):
-			build_folder.mkdir()
-
-		# Create dockerfile in build directory.
-		async with aiofiles.open(build_folder / "Dockerfile", 'w') as file:
-			await file.write(self.DOCKERFILE)
-
-		# Add server.jar.
+		"""
+		Build a docker image for this object's version.
+		From: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Image/operation/ImageBuild
+		"""
+		# Get server.jar.
+		jar_file = BytesIO()
 		async with aiohttp.ClientSession() as session:
 			async with session.get(self.version.url) as response:
 				response.raise_for_status()
-				async with aiofiles.open(build_folder / "server.jar", 'wb') as file:
-					while(chunk := await response.content.read(1024)):
-						await file.write(chunk)
+				while(chunk := await response.content.read(1024)):
+					jar_file.write(chunk)
+
+		jar_file.seek(0)
+		raw_jar_file = jar_file.read()
+
+		data = BytesIO()
+		with tarfile.open(fileobj=data, mode="w") as archive:
+			tar_info = tarfile.TarInfo(name="Dockerfile")
+			tar_info.size = len(self.DOCKERFILE)
+			archive.addfile(tar_info, BytesIO(self.DOCKERFILE))
+
+			tar_info = tarfile.TarInfo(name="server.jar")
+			tar_info.size = len(raw_jar_file)
+			archive.addfile(tar_info, BytesIO(raw_jar_file))
+
+		data.seek(0)
+		raw_data = data.read()
 
 		# Docker build.
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"build",
-			"--tag",
-			self.reference,
-			"--progress",
-			"quiet",
-			build_folder,
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to build docker image with stderr: {stderr}")
+		try:
+			await request_json(
+				"build",
+				"POST",
+				params={"t": self.tag, "q": "true"},
+				headers={"Content-Type": "application/x-tar"},
+				data=raw_data
+			)
+
+		except Exception as cause:
+			raise Exception(f"Failed to build docker image.") from cause
 
 
 	async def exists(self) -> bool:
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"images",
-			"--filter",
-			f"reference={self.reference}",
-			"--format",
-			"{{.Repository}}:{{.Tag}}",
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to check docker images with stderr: {stderr}")
+		try:
+			return await request_json(f"images/{self.tag}/json", quiet=True) is not None
 
-		return stdout != ""
-
-
-	async def remove(self) -> None:
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"rmi",
-			self.reference,
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		_stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to remove docker image with stderr: {stderr}")
+		except Exception as cause:
+			raise Exception(f"Failed to check docker images.") from cause

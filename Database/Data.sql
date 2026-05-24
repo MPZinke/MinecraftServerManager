@@ -15,7 +15,7 @@ INSERT INTO "Versions" ("released", "tag", "title", "url") VALUES
 
 
 -- FROM: https://minecraft.wiki/w/Biome#Biome_types
-INSERT INTO "Biomes" ("world", "title", "description") VALUES
+INSERT INTO "Biomes" ("dimension", "title", "description") VALUES
 ('overworld', 'Ocean', 'The basic ocean biome. Like its colder variants, its floor is largely made up of gravel, covered with kelp and seagrass. However, small patches of dirt, sand and clay can also appear. Cod and salmon (BE only) can spawn here alongside dolphins, squid and nautiluses. Drowned and rarely zombie nautiluses may also spawn here at night and during thunderstorms.'),
 ('overworld', 'Deep Ocean', 'A variant of the ocean biome. In deep ocean biomes, the ocean can exceed 30 blocks in depth, making it twice as deep as the normal ocean. The ground is mainly covered with gravel. Ocean monuments generate in deep oceans, meaning guardians, elder guardians, prismarine and sponges can spawn here.'),
 ('overworld', 'Warm Ocean', 'A variant of the ocean biome, with light teal water at the surface. Like the lukewarm ocean, it has a floor made of sand and like all oceans, it is populated with seagrass, but without kelp. Pufferfish and tropical fish spawn here alongside dolphins, squid and nautiluses. Drowned and rarely zombie nautiluses may also spawn here at night and during thunderstorms. Unlike other ocean biomes, warm oceans allow for the generation of coral reefs and sea pickles. It is the only ocean biome that does not have a deep equivalent, but the terrain in this biome can reach the same depth as deep oceans.'),
