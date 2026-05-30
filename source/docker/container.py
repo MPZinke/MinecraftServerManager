@@ -15,6 +15,7 @@ __author__ = "MPZinke"
 
 
 import asyncio
+import json
 import os
 import re
 import socket
@@ -87,30 +88,37 @@ class Container:
 			logger.info("Adding bonus chest.")
 			command_args.append("--bonusChest")
 
-		process = await asyncio.create_subprocess_exec(
-			"docker",
-			"run",
-			"--detach",
-			"--interactive",
-			"--rm",
-			"--tty",
-			"--label",
-			f"service={self.SERVICE_LABEL}",
-			"--publish",
-			f"{self.world.port}:25565",
-			"--volume",
-			f"{self.world._data_path}:/usr/app",
-			image.tag,
-			*command_args,
-			stderr=asyncio.subprocess.PIPE,
-			stdout=asyncio.subprocess.PIPE,
-		)
-		stdout, stderr = map(lambda io: io.decode().strip(), await process.communicate())
-		if(process.returncode != 0):
-			raise Exception(f"Failed to run docker container with stderr: {stderr}")
+		try:
+			result: dict = await request_json(
+				"containers/create",
+				"POST",
+				headers={"Content-Type": "application/json"},
+				data=json.dumps(
+					{
+						"Image": image.tag,
+						"Cmd": command_args,
+						"Tty": True,
+						"Labels": {"service": self.SERVICE_LABEL},
+						"HostConfig": {
+							"AutoRemove": True,
+							"Binds": [f"{self.world._data_path}:/usr/app"],
+							"PortBindings": {"25565/tcp": [{"HostPort": str(self.world.port)}]},
+						},
+					}
+				)
+			)
 
-		self.world.container_id = stdout
-		logger.info(f"Started container {self.world.container_id}.")
+			self.world.container_id = result["Id"]
+
+			result: dict = await request_json(
+				f"containers/{self.world.container_id}/start",
+				"POST",
+				# params={"detachKeys": ""},
+			)
+			logger.info(f"Started container {self.world.container_id}.")
+
+		except Exception as cause:
+			raise Exception(f"Failed to run docker container.") from cause
 
 
 	async def stop(self) -> None:

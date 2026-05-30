@@ -48,7 +48,6 @@ class Image:
 	async def build(self) -> None:
 		"""
 		Build a docker image for this object's version.
-		From: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Image/operation/ImageBuild
 		"""
 		# Get server.jar.
 		jar_file = BytesIO()
@@ -61,6 +60,7 @@ class Image:
 		jar_file.seek(0)
 		raw_jar_file = jar_file.read()
 
+		# Create archive data.
 		data = BytesIO()
 		with tarfile.open(fileobj=data, mode="w") as archive:
 			tar_info = tarfile.TarInfo(name="Dockerfile")
@@ -72,16 +72,16 @@ class Image:
 			archive.addfile(tar_info, BytesIO(raw_jar_file))
 
 		data.seek(0)
-		raw_data = data.read()
 
-		# Docker build.
+		# Build docker image.
+		# From: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Image/operation/ImageBuild
 		try:
 			await request_json(
 				"build",
 				"POST",
 				params={"t": self.tag, "q": "true"},
 				headers={"Content-Type": "application/x-tar"},
-				data=raw_data
+				data=data.read()
 			)
 
 		except Exception as cause:
