@@ -97,6 +97,7 @@ class Container:
 					{
 						"Image": image.tag,
 						"Cmd": command_args,
+						"OpenStdin": True,
 						"Tty": True,
 						"Labels": {"service": self.SERVICE_LABEL},
 						"HostConfig": {
@@ -104,6 +105,7 @@ class Container:
 							"Binds": [f"{self.world._data_path}:/usr/app"],
 							"PortBindings": {"25565/tcp": [{"HostPort": str(self.world.port)}]},
 						},
+						"ExposedPorts": {"25565/tcp": {}},
 					}
 				)
 			)
