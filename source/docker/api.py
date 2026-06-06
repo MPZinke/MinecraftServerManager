@@ -12,7 +12,9 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import asyncio
 import os
+import re
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -21,6 +23,83 @@ import aiohttp
 
 
 _session: Optional[aiohttp.ClientSession] = None
+
+
+class Attach:
+	def __init__(self, container_id: str):
+		self._container_id = container_id
+		self._session = None
+		self._loop = None
+		self._raw_socket = None
+
+
+	async def __aenter__(self):
+		self._session = _get_session()
+		self._loop = asyncio.get_event_loop()
+
+		async with self._session.post(
+			f"http://localhost/containers/{self._container_id}/attach",
+			params={"stream": "1", "stdin": "1", "stdout": "1", "stderr": "1"},
+			headers={"Content-Type": "application/vnd.docker.raw-stream", "Upgrade": "tcp", "Connection": "Upgrade"},
+		) as response:
+			connection = response.connection
+			protocol = connection.protocol
+			transport = protocol.transport
+			raw_socket = transport.get_extra_info("socket")
+			self._raw_socket = raw_socket.dup()
+			self._raw_socket.setblocking(False)
+
+			return self
+
+
+	async def __aexit__(self, exc_type, exc_value, exc_tb):
+		if(self._raw_socket is not None):
+			self._raw_socket.close()
+
+
+	async def send(self, message: str) -> None:
+		if(not message.endswith("\n")):
+			message += "\n"
+
+		await self._loop.sock_sendall(self._raw_socket, message.encode())
+
+
+	async def match(self, pattern: str, *, timeout: float=5.0):
+		compiled_pattern = re.compile(pattern)
+		timeout_time = self._loop.time() + timeout
+
+		try:
+			while(self._loop.time() < timeout_time):
+				try:
+					remaining = timeout_time - self._loop.time()
+					chunk = await asyncio.wait_for(self._loop.sock_recv(self._raw_socket, 4096), timeout=min(remaining, 0.5))
+
+				except asyncio.TimeoutError:
+					continue
+
+				if(not chunk):
+					break
+
+				text = chunk.decode(errors="replace")
+				match = compiled_pattern.search(text)
+				if(match is not None):
+					return match
+
+		except Exception:
+			return None
+
+
+def _get_session() -> aiohttp.ClientSession:
+	global _session
+
+	if(_session is None):
+		if(os.getenv("DOCKER") != "true"):
+			connector = aiohttp.UnixConnector("/Users/mpzinke/.docker/run/docker.sock")
+		else:
+			connector = aiohttp.UnixConnector("/var/run/docker.sock")
+		_session = aiohttp.ClientSession(connector=connector)
+
+	return _session
 
 
 async def request_json(
@@ -47,17 +126,10 @@ async def request_json(
 		- aiohttp.client_exceptions.ClientResponseError: If a non-2XX is returned and quiet is False.
 		- aiohttp.client_exceptions.UnixClientConnectorError: If the socket is invalid.
 	"""
-	global _session
-
-	if(_session is None):
-		if(os.getenv("DOCKER") != "true"):
-			connector = aiohttp.UnixConnector("/Users/mpzinke/.docker/run/docker.sock")
-		else:
-			connector = aiohttp.UnixConnector("/var/run/docker.sock")
-		_session = aiohttp.ClientSession(connector=connector)
+	session = _get_session()
 
 	url = urljoin("http://localhost", path)
-	async with _session.request(method, url, params=params, headers=headers, data=data) as response:
+	async with session.request(method, url, params=params, headers=headers, data=data) as response:
 		if(quiet is False):
 			try:
 				response.raise_for_status()

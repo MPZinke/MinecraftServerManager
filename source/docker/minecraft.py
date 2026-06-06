@@ -14,98 +14,97 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import re
 from typing import Optional, Tuple
 
 
 import pexpect
 
 
+from docker.api import Attach
+from logger import logger
+
+
 LOG_FORMAT_INFO_REGEX = r"\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[Server thread/INFO\]"
 
 
 async def get_player_location(container_id: str, player: str) -> Tuple[str, Tuple[int, int, int]]:
-	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-
-	# Dimension.
-	analyzer.sendline(f"data get entity {player} Dimension")  # FROM: https://minecraft.wiki/w/Commands/data
+	# EG. `[17:19:38] [Server thread/INFO]: No entity was found`
+	no_entity_regex = r"(?P<no_entity>No entity was found)"
 	# EG. `[21:18:23] [Server thread/INFO]: MPZinke has the following entity data: "minecraft:overworld"`
-	dimension_regex = r"\"minecraft:(?P<dimension>[_\w]+)\""
-	entity_dimension_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {dimension_regex}"
+	dimension_regex = rf"{player} has the following entity data: \"minecraft:(?P<dimension>[_\w]+)\""
+	entity_dimension_regex = rf"{LOG_FORMAT_INFO_REGEX}: {dimension_regex}"
 
-	await analyzer.expect(entity_dimension_regex, async_=True)
-	match_dict: dict = analyzer.match.groupdict()
-	dimension = match_dict["dimension"]
-
-	# Location.
-	analyzer.sendline(f"data get entity {player} Pos")  # FROM: https://minecraft.wiki/w/Commands/data
 	# EG. `[15:11:07] [Server thread/INFO]: MPZinke has the following entity data: [257.30000001192093d, 93.0d, -290.06413177702524d]`
-	location_regex = r"\[(?P<X>-?\d+)\.\d+d, (?P<Y>-?\d+)\.\d+d, (?P<Z>-?\d+)\.\d+d\]"
-	entity_location_regex = rf"{LOG_FORMAT_INFO_REGEX}: {player} has the following entity data: {location_regex}"
+	coordinate_regex = r"\[(?P<X>-?\d+)\.\d+d, (?P<Y>-?\d+)\.\d+d, (?P<Z>-?\d+)\.\d+d\]"
+	location_regex = rf"{player} has the following entity data: {coordinate_regex}"
+	entity_location_regex = rf"{LOG_FORMAT_INFO_REGEX}: ({location_regex}|{no_entity_regex})"
+	async with Attach(container_id) as connection:
+		await connection.send(f"data get entity {player} Dimension")  # FROM: https://minecraft.wiki/w/Commands/data
+		dimension_match: Optional[re.Match] = await connection.match(entity_dimension_regex, timeout=5.0)
+		if(dimension_match is None):
+			logger.error(f"The dimension command did not return any viable results for {player}.")
+			return None, None
 
-	await analyzer.expect(entity_location_regex, async_=True)
-	match_dict: dict = analyzer.match.groupdict()
-	location = [int(match_dict["X"]), int(match_dict["Y"]), int(match_dict["Z"])]
+		await connection.send(f"data get entity {player} Pos")  # FROM: https://minecraft.wiki/w/Commands/data
+		location_match: Optional[re.Match] = await connection.match(entity_location_regex, timeout=5.0)
+		if(location_match is None):
+			logger.error(f"The location command did not return any viable results for {player}.")
+			return None, None
+
+	dimension_match_dict = dimension_match.groupdict()
+	dimension = dimension_match_dict["dimension"]
+	location_match_dict: dict = location_match.groupdict()
+	location = [int(location_match_dict["X"]), int(location_match_dict["Y"]), int(location_match_dict["Z"])]
 
 	return dimension, location
 
 
 async def get_seed(container_id: str) -> Optional[int]:
-	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=30)
-
 	# Wait for server to fully start.
 	# EG. `[18:53:08] [Server thread/INFO]: Done (0.250s)! For help, type "help"`
 	server_start_regex = rf"{LOG_FORMAT_INFO_REGEX}: Done \(\d+\.\d+s\)! For help, type \"help\""
-	await analyzer.expect([server_start_regex, pexpect.TIMEOUT], async_=True)
-
-	analyzer.sendline("seed")  # FROM: https://minecraft.fandom.com/wiki/Commands/seed
 	# EG. `[04:26:45] [Server thread/INFO]: Seed: [2817679626123392159]`
 	seed_regex = rf"{LOG_FORMAT_INFO_REGEX}: Seed: \[(?P<seed>-?\d+)\]"
-	expect_regexes = [seed_regex, pexpect.TIMEOUT]
-	index: int = await analyzer.expect(expect_regexes, async_=True)
 
-	match(expect_regexes[index]):
-		case(str() as seed_regex):
-			return analyzer.match.groupdict()["seed"]
+	async with Attach(container_id) as connection:
+		await connection.match(server_start_regex, timeout=30.0)
+		await connection.send("seed")  # FROM: https://minecraft.fandom.com/wiki/Commands/seed
+		seed_match: Optional[str] = await connection.match(seed_regex, timeout=5.0)
 
-		case(pexpect.TIMEOUT):
-			return None
+	if(seed_match is None):
+		return None
+
+	return seed_match.groupdict()["seed"]
 
 
 async def op_player(container_id: str, player: str) -> None:
-	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-	analyzer.sendline(f"op {player}")  # FROM: https://minecraft.fandom.com/wiki/Commands/op
-
 	# EG. `[22:38:32] [Server thread/INFO]: Made MPZinke a server operator`
-	op_regex = rf"{LOG_FORMAT_INFO_REGEX}: Made {player} a server operator"
+	# OR  `[02:38:56] [Server thread/INFO]: Nothing changed. The player already is an operator`
+	log_regex = rf"(Made {player} a server operator|Nothing changed\. The player already is an operator)"
+	regex = rf"{LOG_FORMAT_INFO_REGEX}: {log_regex}"
+	async with Attach(container_id) as connection:
+		await connection.send(f"op {player}")  # FROM: https://minecraft.fandom.com/wiki/Commands/op
+		result = await connection.match(regex, timeout=5.0)
 
-	await analyzer.expect(op_regex, async_=True)
+	if(result is not None):
+		logger.info(f"Successfully made {player} an OP.")
+	else:
+		logger.error(f"Failed to make {player} an OP.")
 
 
 async def stop_server(container_id: str) -> bool:
-	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=30)
-	analyzer.sendline("stop")  # FROM: https://minecraft.fandom.com/wiki/Commands/stop
-
 	# EG. `[17:40:06] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved`
-	stop_regex = rf"{LOG_FORMAT_INFO_REGEX}: ThreadedAnvilChunkStorage: All dimensions are saved"
-	expect_regexes = [stop_regex, pexpect.TIMEOUT]
+	regex = rf"{LOG_FORMAT_INFO_REGEX}: ThreadedAnvilChunkStorage: All dimensions are saved"
+	async with Attach(container_id) as connection:
+		await connection.send("stop")  # FROM: https://minecraft.fandom.com/wiki/Commands/stop
+		return (await connection.match(regex, timeout=30.0)) is not None
 
-	index: int = await analyzer.expect(expect_regexes, async_=True)
-	return expect_regexes[index] == stop_regex
 
-
-async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int], world: str) -> None:
-	# FROM: https://docs.docker.com/reference/cli/docker/container/attach/
-	analyzer = pexpect.spawn(f"docker attach {container_id}", encoding='utf-8', timeout=5)
-
-	location_string: str = " ".join(map(str, location))
-	# FROM: https://minecraft.fandom.com/wiki/Commands/tp
-	analyzer.sendline(f"execute in {world} run tp {player} {location_string}")
-
+async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int], dimension: str) -> None:
 	# EG. `[22:56:10] [Server thread/INFO]: Teleported MPZinke to 2.500000, 88.000000, 11.500000`
-	tp_regex = rf"{LOG_FORMAT_INFO_REGEX}: Teleported MPZinke to .*"
-
-	await analyzer.expect(tp_regex, async_=True)
+	regex = rf"{LOG_FORMAT_INFO_REGEX}: Teleported MPZinke to .*"
+	async with Attach(container_id) as connection:
+		# FROM: https://minecraft.fandom.com/wiki/Commands/tp
+		await connection.send(f"execute in {dimension} run tp {player} {" ".join(map(str, location))}")
+		await connection.match(regex, timeout=5.0)

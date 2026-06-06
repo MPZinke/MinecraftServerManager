@@ -119,6 +119,7 @@ async def POST_worlds_world_stop(world_id: int):
 		async def stop_world():
 			try:
 				if(not await stop_server(world.container_id)):  # Graceful shutdown.
+					logger.error(f"Failed to gracefully stop server for world ID: {world_id}")
 					await Container(world).stop()  # Risky shutdown
 
 			except Exception:

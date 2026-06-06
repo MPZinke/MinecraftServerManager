@@ -58,8 +58,10 @@ async def POST_worlds_world_locations_new(world_id: int):
 
 		player: Player = get_player(player_id)
 
-		dimension, location = await get_player_location(world.container_id, player.name)  # str, Tuple[int, int, int]
-		print(f"dimension: {dimension}")
+		# Optional[str], Optional[Tuple[int, int, int]]
+		dimension, location = await get_player_location(world.container_id, player.name)
+
+		# TODO: If None, None: redirect to error page.
 
 		location = Location(
 			id=0,
@@ -75,7 +77,6 @@ async def POST_worlds_world_locations_new(world_id: int):
 				description=None,
 			),
 		)
-
 		new_location(location)
 
 	return redirect(f"/worlds/{world_id}/locations")
