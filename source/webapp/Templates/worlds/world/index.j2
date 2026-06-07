@@ -40,7 +40,6 @@
 		</a>
 
 		<table>
-			</tr>
 			<tr>
 				<td
 					id="state-td"
@@ -129,6 +128,17 @@
 			</tr>
 			<tr>
 				<td>
+					online players
+				</td>
+				<td>
+					<table
+						id="online_players-table"
+					>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
 					data
 				</td>
 				<td>
@@ -168,10 +178,31 @@
 
 <script>
 	const CONTAINER_ID_TD = document.getElementById("container_id-td");
+	const ONLINE_PLAYERS_TABLE = document.getElementById("online_players-table");
 	const PORT_TD = document.getElementById("port-td");
 	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
 	const STATE_TD = document.getElementById("state-td");
 	const LAST_PLAYED_TD = document.getElementById("last_played-td");
+
+
+	async function get_online_players()
+	{
+		let response = await fetch(
+			`/worlds/{{ world.id }}/players/online/json`,
+			{
+				method: `GET`,
+				headers: {"Content-Type": "application/json"},
+			}
+		);
+		let response_json = await response.json();
+
+		for(var index = 0; index < response_json.length; index++)
+		{
+			let player_row = document.createElement("tr");
+			player_row.innerHTML = `<td>${response_json[index].name}</td>`;
+			ONLINE_PLAYERS_TABLE.append(player_row);
+		}
+	}
 
 
 	async function update_state()
@@ -202,4 +233,6 @@
 	{% if world.state not in ["offline", "running"] %}
 		const INTERVAL = setInterval(update_state, 1000);
 	{% endif %}
+
+	get_online_players();
 </script>

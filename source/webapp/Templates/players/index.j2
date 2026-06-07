@@ -1,0 +1,45 @@
+<html>
+	<title>
+		Players
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt; Players
+	</header>
+
+	<body>
+		<h1>
+			Players
+		</h1>
+
+		<table>
+			<thead>
+				<tr>
+					<td>
+						Name
+					</td>
+					<td>
+						UUID
+					</td>
+				</tr>
+			</thead>
+			<tbody>
+				{% for player in players %}
+					<tr>
+						<td>
+							{{ player.name }}
+						</td>
+						<td>
+							{{ player.uuid }}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</body>
+</html>

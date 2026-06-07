@@ -21,6 +21,7 @@ from typing import Optional, Tuple
 import pexpect
 
 
+from database.classes import Player
 from docker.api import Attach
 from logger import logger
 
@@ -58,6 +59,22 @@ async def get_player_location(container_id: str, player: str) -> Tuple[str, Tupl
 	location = [int(location_match_dict["X"]), int(location_match_dict["Y"]), int(location_match_dict["Z"])]
 
 	return dimension, location
+
+
+async def get_online_players(container_id: str) -> Optional[list[Player]]:
+	# EG. `[02:01:10] [Server thread/INFO]: There are 0 of a max of 20 players online: `
+	# OR  `[02:00:18] [Server thread/INFO]: There are 1 of a max of 20 players online: MPZinke (67c84847-04c1-4b52-945f-ec377ee607a4)`
+	player_info_regex = r"(?:(\w+) \(([\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})\))"
+	players_info_list_regex = rf"(?P<online_players>(?:{player_info_regex}(?:, {player_info_regex})*)?)"
+	regex = rf"{LOG_FORMAT_INFO_REGEX}: There are \d+ of a max of \d+ players online: {players_info_list_regex}"
+	async with Attach(container_id) as connection:
+		await connection.send("list uuids")  # FROM: https://minecraft.fandom.com/wiki/Commands/list
+		match: Optional[re.Match] = await connection.match(regex, timeout=5.0)
+
+	if(match is None):
+		return None
+
+	return [Player(0, name, uuid) for name, uuid in re.findall(player_info_regex, match.groupdict()["online_players"])]
 
 
 async def get_seed(container_id: str) -> Optional[int]:

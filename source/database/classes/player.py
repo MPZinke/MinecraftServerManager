@@ -39,3 +39,7 @@ class Player:
 			name=location_dict["name"],
 			uuid=location_dict["uuid"],
 		)
+
+
+	def __iter__(self) -> dict:
+		yield from {"id": self.id, "name": self.name, "uuid": self.uuid}.items()

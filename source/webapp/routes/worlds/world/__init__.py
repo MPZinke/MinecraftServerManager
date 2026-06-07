@@ -25,7 +25,7 @@ import traceback
 from quart import jsonify, redirect, render_template, request, send_file, Blueprint
 
 
-from database.classes import Version, World
+from database.classes import Player, Version, World
 from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
@@ -40,7 +40,7 @@ from database.queries.worlds import (
 	set_world_offline,
 )
 from docker import Container, Image
-from docker.minecraft import get_seed, stop_server
+from docker.minecraft import get_online_players, get_seed, stop_server
 from logger import logger
 from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
@@ -143,3 +143,15 @@ async def GET_worlds_world_download(world_id: int):
 
 	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
+
+
+@worlds_world_blueprint.get("/worlds/<int:world_id>/players/online/json")
+async def GET_worlds_world_players_online_json(world_id: int):
+	world: World = get_world(world_id)
+
+	if(world.state != "running"):
+		return {"error": f"World {world_id} is not running."}
+
+	online_players: list[Player] = await get_online_players(world.container_id)
+	# TODO: Add new players automatically to DB.
+	return list(map(dict, online_players))
