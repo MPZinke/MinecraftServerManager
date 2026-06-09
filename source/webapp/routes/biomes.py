@@ -13,4 +13,19 @@ __author__ = "MPZinke"
 #                                                                                                                      #
 ########################################################################################################################
 
-# TODO
+
+from quart import render_template, Blueprint
+
+
+from database.classes import Biome
+from database.queries.biomes import get_biomes
+
+
+biomes_blueprint = Blueprint('biomes_blueprint', __name__)
+
+
+@biomes_blueprint.get("/biomes")
+async def GET_biomes():
+	biomes: list[Biome] = get_biomes()
+	print(len(biomes))
+	return await render_template("biomes/index.j2", biomes=biomes)

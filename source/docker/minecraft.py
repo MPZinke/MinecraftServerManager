@@ -18,9 +18,6 @@ import re
 from typing import Optional, Tuple
 
 
-import pexpect
-
-
 from database.classes import Player
 from docker.api import Attach
 from logger import logger

@@ -29,12 +29,14 @@ from database.classes import Version, World
 from database.queries.versions import get_versions
 from database.queries.worlds import get_worlds
 from docker import Container, Image
+from webapp.routes.biomes import biomes_blueprint
 from webapp.routes.players import players_blueprint
 from webapp.routes.versions import versions_blueprint
 from webapp.routes.worlds import worlds_blueprint
 
 
 root_blueprint = Blueprint('root_blueprint', __name__)
+root_blueprint.register_blueprint(biomes_blueprint)
 root_blueprint.register_blueprint(players_blueprint)
 root_blueprint.register_blueprint(versions_blueprint)
 root_blueprint.register_blueprint(worlds_blueprint)

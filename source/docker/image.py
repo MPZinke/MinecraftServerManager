@@ -14,13 +14,10 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import asyncio
 from io import BytesIO
-from pathlib import Path
 import tarfile
 
 
-import aiofiles
 import aiohttp
 
 
