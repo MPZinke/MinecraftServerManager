@@ -29,13 +29,13 @@ versions_blueprint = Blueprint('versions_blueprint', __name__)
 
 @versions_blueprint.get("/versions")
 async def GET_versions():
-	versions = get_versions()
+	versions = await get_versions()
 	return await render_template("versions/index.j2", versions=versions)
 
 
 @versions_blueprint.get("/versions/new")
 async def GET_versions_new():
-	versions: list[Version] = get_versions()
+	versions: list[Version] = await get_versions()
 	return await render_template("versions/new.j2", versions=versions)
 
 
@@ -48,6 +48,6 @@ async def POST_versions_new():
 		title=request.form["title-input"],
 		url=request.form["url-input"],
 	)
-	new_version(version)
+	await new_version(version)
 
 	return redirect("/versions")

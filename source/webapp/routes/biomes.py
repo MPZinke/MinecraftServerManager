@@ -26,6 +26,5 @@ biomes_blueprint = Blueprint('biomes_blueprint', __name__)
 
 @biomes_blueprint.get("/biomes")
 async def GET_biomes():
-	biomes: list[Biome] = get_biomes()
-	print(len(biomes))
+	biomes: list[Biome] = await get_biomes()
 	return await render_template("biomes/index.j2", biomes=biomes)

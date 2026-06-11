@@ -25,6 +25,9 @@
 
 		<a
 			href="/worlds/{{ world.id }}/commands"
+			{% if world.state != "running" %}
+				disabled
+			{% endif %}
 		>
 			<button>
 				Commands
@@ -33,6 +36,9 @@
 
 		<a
 			href="/worlds/{{ world.id }}/locations"
+			{% if world.state != "running" %}
+				disabled
+			{% endif %}
 		>
 			<button>
 				Locations

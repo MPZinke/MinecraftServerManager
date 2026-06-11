@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from threading import Event, Thread
 import traceback
-from typing import Tuple
+from typing import Awaitable, Tuple
 
 
 from database.classes import World
@@ -15,8 +15,9 @@ from docker import Container
 from logger import logger
 
 
-def update_world_statuses() -> None:
-	worlds: list[World] = get_running_worlds()
+async def update_world_statuses() -> None:
+	worlds: list[World] = await get_running_worlds()
+	# TODO: Convert to docker API.
 	process = subprocess.run(
 		[
 			"docker",
@@ -40,25 +41,26 @@ def update_world_statuses() -> None:
 
 		logger.info(f"Updating world {world.name}")
 		try:
-			asyncio.run(world.read_data())
+			await world.read_data()
 
 		except FileNotFoundError:
 			logger.info(f"World folder '{world._data_path!s}' not found. Resetting world.")
 			world.state = "offline"
 			world.container_id = None
 			world.port = None
-			set_world_container(world)
-			set_world_state(world)
+			set_world_container_promise: Awaitable[None] = set_world_container(world)
+			set_world_state_promise: Awaitable[None] = set_world_state(world)
+			await asyncio.gather(set_world_container_promise, set_world_state_promise)
 
 		else:
-			set_world_offline(world)
+			await set_world_offline(world)
 			shutil.rmtree(world._data_path)
 
 
 def update_loop(event: Event):
 	while(not event.wait(60)):
 		try:
-			update_world_statuses()
+			asyncio.run(update_world_statuses())
 
 		except Exception:
 			logger.error(traceback.format_exc())

@@ -14,7 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import psycopg2.extras
+import psycopg
 
 
 from database.connect import connect
@@ -22,13 +22,13 @@ from database.classes import Version, World
 
 
 @connect
-def delete_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
+async def delete_world(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """DELETE FROM "Worlds" WHERE "id" = %s;"""
-	cursor.execute(query, (world_id,))
+	await cursor.execute(query, (world_id,))
 
 
 @connect
-def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
+async def get_world(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """
 		SELECT
 			"Worlds".*,
@@ -42,9 +42,9 @@ def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 		WHERE "Worlds"."id" = %s
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	cursor.execute(query, (world_id,))
+	await cursor.execute(query, (world_id,))
 
-	world_dict = cursor.fetchone()
+	world_dict = await cursor.fetchone()
 	version = Version(
 		id=world_dict["Versions.id"],
 		released=world_dict["Versions.released"],
@@ -56,7 +56,7 @@ def get_world(cursor: psycopg2.extras.RealDictCursor, world_id: int) -> dict:
 
 
 @connect
-def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
+async def get_worlds(cursor: psycopg.AsyncCursor) -> list[World]:
 	query = """
 		SELECT
 			"Worlds".*,
@@ -69,10 +69,10 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 		JOIN "Versions" ON "Worlds"."Versions.id" = "Versions"."id"
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	cursor.execute(query)
+	await cursor.execute(query)
 
 	worlds: list[World] = []
-	for world_dict in cursor:
+	async for world_dict in cursor:
 		version = Version(
 			id=world_dict["Versions.id"],
 			released=world_dict["Versions.released"],
@@ -86,7 +86,7 @@ def get_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 
 
 @connect
-def get_running_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
+async def get_running_worlds(cursor: psycopg.AsyncCursor) -> list[World]:
 	query = """
 		SELECT
 			"Worlds".*,
@@ -100,10 +100,10 @@ def get_running_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 		WHERE "Worlds"."state" = 'running'
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	cursor.execute(query)
+	await cursor.execute(query)
 
 	worlds: list[World] = []
-	for world_dict in cursor:
+	async for world_dict in cursor:
 		version = Version(
 			id=world_dict["Versions.id"],
 			released=world_dict["Versions.released"],
@@ -117,99 +117,99 @@ def get_running_worlds(cursor: psycopg2.extras.RealDictCursor) -> list[World]:
 
 
 @connect
-def new_world(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def new_world(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		INSERT INTO "Worlds" ("name", "data", "notes", "Versions.id") VALUES
 		(%s, %s, %s, %s)
 		RETURNING "id";
 	"""
-	cursor.execute(query, (world.name, world.data, world.notes, world.version.id))
+	await cursor.execute(query, (world.name, world.data, world.notes, world.version.id))
 
-	world.id = cursor.fetchone()["id"]
+	world.id = (await cursor.fetchone())["id"]
 
 
 @connect
-def set_world_container(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_container(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "container_id" = %s, "port" = %s
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.container_id, world.port, world.id))
+	await cursor.execute(query, (world.container_id, world.port, world.id))
 
 
 @connect
-def set_world_stopping(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_stopping(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "state" = 'stopping'
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.id,))
+	await cursor.execute(query, (world.id,))
 
 	world.state = "stopping"
 
 
 @connect
-def set_world_port(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_port(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "port" = %s
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.port, world.id))
+	await cursor.execute(query, (world.port, world.id))
 
 
 @connect
-def set_world_running(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_running(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "container_id" = %s, "last_played" = NOW(), "port" = %s, "state" = 'running'
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.container_id, world.port, world.id))
+	await cursor.execute(query, (world.container_id, world.port, world.id))
 
 
 @connect
-def set_world_starting(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_starting(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "state" = 'starting'
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.id,))
+	await cursor.execute(query, (world.id,))
 
 	world.state = "starting"
 
 
 @connect
-def set_world_seed(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_seed(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "seed" = %s
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.seed, world.id))
+	await cursor.execute(query, (world.seed, world.id))
 
 
 @connect
-def set_world_state(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_state(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "state" = %s
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.state, world.id))
+	await cursor.execute(query, (world.state, world.id))
 
 
 @connect
-def set_world_offline(cursor: psycopg2.extras.RealDictCursor, world: World) -> None:
+async def set_world_offline(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "container_id" = NULL, "data" = %s, "port" = NULL, "state" = 'offline'
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (world.data, world.id))
+	await cursor.execute(query, (world.data, world.id))
 
 	world.port = None
 	world.state = "offline"

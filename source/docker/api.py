@@ -72,7 +72,10 @@ class Attach:
 			while(self._loop.time() < timeout_time):
 				try:
 					remaining = timeout_time - self._loop.time()
-					chunk = await asyncio.wait_for(self._loop.sock_recv(self._raw_socket, 4096), timeout=min(remaining, 0.5))
+					chunk = await asyncio.wait_for(
+						self._loop.sock_recv(self._raw_socket, 4096),
+						timeout=min(remaining, 0.5)
+					)
 
 				except asyncio.TimeoutError:
 					continue

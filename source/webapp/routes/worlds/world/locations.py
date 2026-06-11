@@ -14,7 +14,8 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from typing import Optional, Tuple
+import asyncio
+from typing import Awaitable, Optional
 
 
 from quart import redirect, render_template, request, Blueprint
@@ -33,31 +34,33 @@ worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint',
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
 async def GET_worlds_world_locations(world_id: int):
-	world: World = get_world(world_id)
-	locations: list[Location] = get_locations_for_world(world)
+	world: World = await get_world(world_id)
+	locations: list[Location] = await get_locations_for_world(world)
 	return await render_template("worlds/world/locations/index.j2", world=world, locations=locations)
 
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
 async def GET_worlds_world_locations_new(world_id: int):
-	world: World = get_world(world_id)
-	biomes: list[Biome] = get_biomes()
-	players: list[Player] = get_players()
+	world_promise: Awaitable[World] = get_world(world_id)
+	biomes_promise: Awaitable[list[Biome]] = get_biomes()
+	players_promise: Awaitable[list[Player]] = get_players()
+	# World, list[Biome], list[Player]
+	world, biomes, players = await asyncio.gather(world_promise, biomes_promise, players_promise)
 	return await render_template("worlds/world/locations/new.j2", biomes=biomes, players=players, world=world)
 
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/new")
 async def POST_worlds_world_locations_new(world_id: int):
-	world: World = get_world(world_id)
+	form: dict = await request.form
+	player_id: int = int(form["player-select"])
+	title: str = form["title-input"]
+	biome: Optional[int] = int(form["biome-select"] or "0") or None
+	notes: str = form["notes-textarea"]
+
+	world_promise: Awaitable[World] = get_world(world_id)
+	player_promise: Awaitable[Player] = get_player(player_id)
+	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
 	if(world.state == "running"):
-		form = await request.form
-		title: str = form["title-input"]
-		biome: Optional[int] = int(form["biome-select"] or "0") or None
-		notes: str = form["notes-textarea"]
-		player_id: int = int(form["player-select"])
-
-		player: Player = get_player(player_id)
-
 		# Optional[str], Optional[Tuple[int, int, int]]
 		dimension, location = await get_player_location(world.container_id, player.name)
 
@@ -77,21 +80,22 @@ async def POST_worlds_world_locations_new(world_id: int):
 				description=None,
 			),
 		)
-		new_location(location)
+		await new_location(location)
 
 	return redirect(f"/worlds/{world_id}/locations")
 
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/delete")
 async def POST_worlds_world_locations_location_delete(world_id: int, location_id: int):
-	delete_location(location_id)
+	await delete_location(location_id)
 	return redirect(f"/worlds/{world_id}/locations")
 
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/tp")
 async def POST_worlds_world_locations_location_tp(world_id: int, location_id: int):
-	world: World = get_world(world_id)
-	location: Location = get_location(location_id)
+	world_promise: Awaitable[World] = get_world(world_id)
+	location_promise: Awaitable[Location] = get_location(location_id)
+	world, location = await asyncio.gather(world_promise, location_promise)  # : World, Location
 
 	await teleport_player(world.container_id, "MPZinke", location.location, location.dimension)
 

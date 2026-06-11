@@ -26,5 +26,5 @@ players_blueprint = Blueprint('players_blueprint', __name__)
 
 @players_blueprint.get("/players")
 async def GET_players():
-	players: list[Player] = get_players()
+	players: list[Player] = await get_players()
 	return await render_template("players/index.j2", players=players)

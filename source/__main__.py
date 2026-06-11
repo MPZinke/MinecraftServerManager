@@ -14,6 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import asyncio
 import traceback
 
 
@@ -27,7 +28,7 @@ from webapp import app
 
 def main():
 	try:
-		update_world_statuses()
+		asyncio.run(update_world_statuses())
 
 	except Exception:
 		logger.error(traceback.format_exc())

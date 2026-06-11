@@ -14,7 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import psycopg2.extras
+import psycopg
 
 
 from database.connect import connect
@@ -22,24 +22,25 @@ from database.classes import Player
 
 
 @connect
-def get_player(cursor: psycopg2.extras.RealDictCursor, player_id: int) -> list[Player]:
+async def get_player(cursor: psycopg.AsyncCursor, player_id: int) -> list[Player]:
 	query = """
 		SELECT *
 		FROM "Players"
 		WHERE "id" = %s;
 	"""
-	cursor.execute(query, (player_id,))
+	await cursor.execute(query, (player_id,))
 
-	player_dict: dict = cursor.fetchone()
+	player_dict: dict = await cursor.fetchone()
 	return Player.from_dict(**player_dict)
 
 
 @connect
-def get_players(cursor: psycopg2.extras.RealDictCursor) -> list[Player]:
+async def get_players(cursor: psycopg.AsyncCursor) -> list[Player]:
 	query = """
 		SELECT *
 		FROM "Players";
 	"""
-	cursor.execute(query)
+	await cursor.execute(query)
+	player_dicts: list[dict] = [player_dict async for player_dict in cursor]
 
-	return list(map(lambda player_dict: Player.from_dict(**player_dict), cursor))
+	return list(map(lambda player_dict: Player.from_dict(**player_dict), player_dicts))

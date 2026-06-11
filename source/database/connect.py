@@ -1,9 +1,8 @@
 
 
 import os
-import psycopg2
-import psycopg2.extras
-
+import psycopg
+from psycopg.rows import dict_row
 
 
 def connect(function: callable) -> callable:
@@ -12,7 +11,7 @@ def connect(function: callable) -> callable:
 	PARAMS:  Takes the function that will be wrapped.
 	RETURNS: The function pointer that wraps the function.
 	"""
-	def wrapper(*args: list, **kwargs: dict) -> list|dict:
+	async def wrapper(*args: list, **kwargs: dict) -> list|dict:
 		"""
 		DETAILS: Creates a connection and passes it to the calling function.
 		RETURNS: Value(s) if values.
@@ -22,12 +21,16 @@ def connect(function: callable) -> callable:
 		DB_host: str = os.getenv("MINECRAFT_DB_HOST")
 		DB_password: str = os.getenv("MINECRAFT_DB_PASSWORD")
 
-		connection_string = f"host={DB_host} dbname=Minecraft user={DB_user} password={DB_password}"
-		with psycopg2.connect(connection_string) as connection:
-			connection.autocommit = True  # Automatically commit changes to DB
-			with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-				results: list|dict = function(cursor, *args, **kwargs)
+		# FROM: https://www.psycopg.org/psycopg3/docs/api/connections.html#the-asyncconnection-class
 
+		connection_string = f"host={DB_host} dbname=Minecraft user={DB_user} password={DB_password}"
+		async with await psycopg.AsyncConnection.connect(
+			connection_string,
+			autocommit=True,
+			row_factory=dict_row
+		) as connection:
+			async with connection.cursor() as cursor:
+				results: list|dict = await function(cursor, *args, **kwargs)
 				return results
 
 	wrapper.__name__ = function.__name__

@@ -14,7 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-import psycopg2.extras
+import psycopg
 
 
 from database.connect import connect
@@ -22,12 +22,13 @@ from database.classes import Biome
 
 
 @connect
-def get_biomes(cursor: psycopg2.extras.RealDictCursor) -> list[Biome]:
+async def get_biomes(cursor: psycopg.AsyncCursor) -> list[Biome]:
 	query = """
 		SELECT *
 		FROM "Biomes"
 		ORDER BY "title";
 	"""
 
-	cursor.execute(query)
-	return list(map(lambda biome_dict: Biome.from_dict(**biome_dict), cursor))
+	await cursor.execute(query)
+	biome_dicts: list[dict] = [biome_dict async for biome_dict in cursor]
+	return list(map(lambda biome_dict: Biome.from_dict(**biome_dict), biome_dicts))

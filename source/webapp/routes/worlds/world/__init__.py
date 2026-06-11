@@ -53,24 +53,24 @@ worlds_world_blueprint.register_blueprint(worlds_world_locations_blueprint)
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>")
 async def GET_worlds_world(world_id: int):
-	world: World = get_world(world_id)
+	world: World = await get_world(world_id)
 	return await render_template("worlds/world/index.j2", world=world)
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
-	world = get_world(world_id)
+	world = await get_world(world_id)
 	if(world.state == "offline"):
-		delete_world(world_id)
+		await delete_world(world_id)
 	return redirect("/worlds")
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/start")
 async def POST_worlds_world_start(world_id: int):
-	world: World = get_world(world_id)
+	world: World = await get_world(world_id)
 
 	if(world.state == "offline"):
-		set_world_starting(world)  # Set it before page reload for snappier UI.
+		await set_world_starting(world)  # Set it before page reload for snappier UI.
 
 		async def start_world():
 			try:
@@ -78,16 +78,16 @@ async def POST_worlds_world_start(world_id: int):
 				container = Container(world)
 				await container.run()
 
-				set_world_running(world)
+				await set_world_running(world)
 
 			except Exception:
 				logger.error(traceback.format_exc())
-				set_world_offline(world)
+				await set_world_offline(world)
 				raise
 
 			if(world.seed is None):
 				world.seed: int = await get_seed(world.container_id)
-				set_world_seed(world)
+				await set_world_seed(world)
 
 		asyncio.create_task(start_world())
 
@@ -96,7 +96,7 @@ async def POST_worlds_world_start(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
-	world = get_world(world_id)
+	world = await get_world(world_id)
 
 	return jsonify(
 		{
@@ -111,10 +111,10 @@ async def GET_worlds_world_state(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
 async def POST_worlds_world_stop(world_id: int):
-	world = get_world(world_id)
+	world = await get_world(world_id)
 
 	if(world.state == "running"):
-		set_world_stopping(world)
+		await set_world_stopping(world)
 
 		async def stop_world():
 			try:
@@ -124,12 +124,12 @@ async def POST_worlds_world_stop(world_id: int):
 
 			except Exception:
 				world.state = "running"
-				set_world_state(world)
+				await set_world_state(world)
 				logger.error(traceback.format_exc())
 				return
 
 			await world.read_data()
-			set_world_offline(world)
+			await set_world_offline(world)
 			shutil.rmtree(world._data_path)
 
 		asyncio.create_task(stop_world())
@@ -139,7 +139,7 @@ async def POST_worlds_world_stop(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download")
 async def GET_worlds_world_download(world_id: int):
-	world = get_world(world_id)
+	world = await get_world(world_id)
 
 	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
@@ -147,7 +147,7 @@ async def GET_worlds_world_download(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online/json")
 async def GET_worlds_world_players_online_json(world_id: int):
-	world: World = get_world(world_id)
+	world: World = await get_world(world_id)
 
 	if(world.state != "running"):
 		return {"error": f"World {world_id} is not running."}

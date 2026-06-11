@@ -40,5 +40,5 @@ worlds_blueprint.register_blueprint(worlds_new_blueprint)
 
 @worlds_blueprint.get("/worlds")
 async def GET_worlds():
-	worlds: list[World] = get_worlds()
+	worlds: list[World] = await get_worlds()
 	return await render_template("worlds/index.j2", worlds=worlds)
