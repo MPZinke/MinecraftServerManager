@@ -26,6 +26,7 @@ from quart import jsonify, redirect, render_template, request, send_file, Bluepr
 
 
 from database.classes import Player, Version, World
+from database.queries.players import add_unknown_players
 from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
@@ -153,5 +154,8 @@ async def GET_worlds_world_players_online_json(world_id: int):
 		return {"error": f"World {world_id} is not running."}
 
 	online_players: list[Player] = await get_online_players(world.container_id)
-	# TODO: Add new players automatically to DB.
+
+	# if(len(online_players)):
+	asyncio.create_task(add_unknown_players(online_players))
+
 	return list(map(dict, online_players))

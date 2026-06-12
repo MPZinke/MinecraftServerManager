@@ -1,41 +1,32 @@
 
 
 import asyncio
-import json
 import shutil
-import subprocess
-from threading import Event, Thread
 import traceback
-from typing import Awaitable, Tuple
+from typing import Awaitable
 
 
 from database.classes import World
 from database.queries.worlds import get_running_worlds, set_world_container, set_world_state, set_world_offline
 from docker import Container
+from docker.api import request_json
 from logger import logger
 
 
+
 async def update_world_statuses() -> None:
-	worlds: list[World] = await get_running_worlds()
-	# TODO: Convert to docker API.
-	process = subprocess.run(
-		[
-			"docker",
-			"ps",
-			"--format",
-			"json",
-		],
-		capture_output=True,
-		check=True,
-		text=True,
+	worlds_promise: Awaitable[list[World]] = get_running_worlds()
+	# FROM: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Container/operation/ContainerList
+	containers_promise: Awaitable[list[dict]] = request_json(
+		"containers/json",
+		params={"label": f"service={Container.SERVICE_LABEL}"}
 	)
-	containers: list[Tuple[str, str]] = list(map(json.loads, filter(None, process.stdout.strip().split("\n"))))
-	minecraft_filter = lambda container: f"service={Container.SERVICE_LABEL}" in container["Labels"].split(",")
-	minecraft_containers_iter: iter = filter(minecraft_filter, containers)
-	minecraft_container_ids: list[str] = list(map(lambda container: container["ID"], minecraft_containers_iter))
+	worlds, containers = await asyncio.gather(worlds_promise, containers_promise)  # : list[World], list[dict]
+
+	container_ids: list[str] = list(map(lambda container: container["Id"], containers))
 
 	for world in worlds:
-		if(world.container_id is not None and world.container_id[:12] in minecraft_container_ids):
+		if(world.container_id is not None and world.container_id in container_ids):
 			logger.info(f"Skipping world {world.name}")
 			continue
 
@@ -57,20 +48,13 @@ async def update_world_statuses() -> None:
 			shutil.rmtree(world._data_path)
 
 
-def update_loop(event: Event):
-	while(not event.wait(60)):
+async def update_loop():
+	while(True):
 		try:
-			asyncio.run(update_world_statuses())
+			await update_world_statuses()
+			await asyncio.sleep(60)
 
 		except Exception:
 			logger.error(traceback.format_exc())
 
 	logger.info("Updater stopped.")
-
-
-def start_updater() -> Tuple[Event, Thread]:
-	event = Event()
-	thread = Thread(target=update_loop, args=(event,))
-	thread.start()
-
-	return event, thread

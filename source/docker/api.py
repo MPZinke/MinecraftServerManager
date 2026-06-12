@@ -22,7 +22,10 @@ from urllib.parse import urljoin
 import aiohttp
 
 
-_session: Optional[aiohttp.ClientSession] = None
+if(os.getenv("DOCKER") != "true"):
+	connector_path = f"/Users/{os.getenv("USER")}/.docker/run/docker.sock"
+else:
+	connector_path = "/var/run/docker.sock"
 
 
 class Attach:
@@ -34,7 +37,7 @@ class Attach:
 
 
 	async def __aenter__(self):
-		self._session = _get_session()
+		self._session = aiohttp.ClientSession(connector=aiohttp.UnixConnector(connector_path))
 		self._loop = asyncio.get_event_loop()
 
 		async with self._session.post(
@@ -55,6 +58,8 @@ class Attach:
 	async def __aexit__(self, exc_type, exc_value, exc_tb):
 		if(self._raw_socket is not None):
 			self._raw_socket.close()
+
+		await self._session.close()
 
 
 	async def send(self, message: str) -> None:
@@ -92,19 +97,6 @@ class Attach:
 			return None
 
 
-def _get_session() -> aiohttp.ClientSession:
-	global _session
-
-	if(_session is None):
-		if(os.getenv("DOCKER") != "true"):
-			connector = aiohttp.UnixConnector("/Users/mpzinke/.docker/run/docker.sock")
-		else:
-			connector = aiohttp.UnixConnector("/var/run/docker.sock")
-		_session = aiohttp.ClientSession(connector=connector)
-
-	return _session
-
-
 async def request_json(
 	path: str,
 	method: str="GET",
@@ -129,21 +121,20 @@ async def request_json(
 		- aiohttp.client_exceptions.ClientResponseError: If a non-2XX is returned and quiet is False.
 		- aiohttp.client_exceptions.UnixClientConnectorError: If the socket is invalid.
 	"""
-	session = _get_session()
+	async with aiohttp.ClientSession(connector=aiohttp.UnixConnector(connector_path)) as session:
+		url = urljoin("http://localhost", path)
+		async with session.request(method, url, params=params, headers=headers, data=data) as response:
+			if(quiet is False):
+				try:
+					response.raise_for_status()
+				except aiohttp.client_exceptions.ClientResponseError as cause:
+					body = await response.text()
+					raise Exception(f"Failed with message: '{body}'") from cause
 
-	url = urljoin("http://localhost", path)
-	async with session.request(method, url, params=params, headers=headers, data=data) as response:
-		if(quiet is False):
-			try:
-				response.raise_for_status()
-			except aiohttp.client_exceptions.ClientResponseError as cause:
-				body = await response.text()
-				raise Exception(f"Failed with message: '{body}'") from cause
+			elif(response.status // 100 != 2):
+				return None
 
-		elif(response.status // 100 != 2):
-			return None
+			if(response.status == 204):
+				return None
 
-		if(response.status == 204):
-			return None
-
-		return await response.json()
+			return await response.json()

@@ -115,7 +115,6 @@ class Container:
 			result: dict = await request_json(
 				f"containers/{self.world.container_id}/start",
 				"POST",
-				# params={"detachKeys": ""},
 			)
 			logger.info(f"Started container {self.world.container_id}.")
 
