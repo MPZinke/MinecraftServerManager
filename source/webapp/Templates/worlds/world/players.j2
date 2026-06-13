@@ -1,0 +1,17 @@
+<table>
+	{% for player in players %}
+		<tr>
+			<td>
+				{% if player.id != 0 %}
+					<a
+						href="/players/{{ player.id }}"
+					>
+						{{ player.name }}
+					</a>
+				{% else %}
+					{{ player.name }}
+				{% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+</table>

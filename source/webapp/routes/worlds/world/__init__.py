@@ -18,7 +18,7 @@ import asyncio
 from io import BytesIO
 from pathlib import Path
 import shutil
-from threading import Thread
+from typing import Awaitable
 import traceback
 
 
@@ -26,7 +26,7 @@ from quart import jsonify, redirect, render_template, request, send_file, Bluepr
 
 
 from database.classes import Player, Version, World
-from database.queries.players import add_unknown_players
+from database.queries.players import add_unknown_players, get_players
 from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
@@ -146,16 +146,25 @@ async def GET_worlds_world_download(world_id: int):
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/players/online/json")
+@worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")
 async def GET_worlds_world_players_online_json(world_id: int):
 	world: World = await get_world(world_id)
 
 	if(world.state != "running"):
 		return {"error": f"World {world_id} is not running."}
 
-	online_players: list[Player] = await get_online_players(world.container_id)
+	online_players_promise: Awaitable[list[Player]] = get_online_players(world.container_id)
+	players_promise: Awaitable[list[Player]] = get_players()
+	# : list[Player], list[Player]
+	online_players, players = await asyncio.gather(online_players_promise, players_promise)
 
-	# if(len(online_players)):
-	asyncio.create_task(add_unknown_players(online_players))
+	if(len(online_players)):
+		asyncio.create_task(add_unknown_players(online_players))
 
-	return list(map(dict, online_players))
+	for online_player in online_players:
+		for player in players:
+			if(online_player.uuid == player.uuid):
+				online_player.id = player.id
+				break
+
+	return await render_template("worlds/world/players.j2", players=online_players)

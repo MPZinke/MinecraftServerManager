@@ -17,6 +17,14 @@
 			Biomes
 		</h1>
 
+		<a
+			href="/biomes/new"
+		>
+			<button>
+				+ New Biome
+			</button>
+		</a>
+
 		<table>
 			<thead>
 				<tr>
@@ -35,10 +43,14 @@
 				{% for biome in biomes %}
 					<tr>
 						<td>
-							{{ biome.title }}
+							<a
+								href="/biomes/{{ biome.id }}"
+							>
+								{{ biome.title }}
+							</a>
 						</td>
 						<td>
-							{{ biome.dimension }}
+							{{ " ".join([part.capitalize() for part in biome.dimension.split("_")]) }}
 						</td>
 						<td>
 							{{ biome.description }}

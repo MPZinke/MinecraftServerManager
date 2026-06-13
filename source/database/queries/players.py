@@ -22,7 +22,7 @@ from database.classes import Player
 
 
 @connect
-async def get_player(cursor: psycopg.AsyncCursor, player_id: int) -> list[Player]:
+async def get_player(cursor: psycopg.AsyncCursor, player_id: int) -> Player:
 	query = """
 		SELECT *
 		FROM "Players"

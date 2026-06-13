@@ -46,5 +46,5 @@ async def update():
 
 @app.after_serving
 async def shutdown():
-    app.background_task.cancel()
-    await asyncio.gather(app.background_task, return_exceptions=True)
+	app.background_task.cancel()
+	await asyncio.gather(app.background_task, return_exceptions=True)

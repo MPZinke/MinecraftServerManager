@@ -22,6 +22,19 @@ from database.classes import Biome
 
 
 @connect
+async def get_biome(cursor: psycopg.AsyncCursor, biome_id: int) -> Biome:
+	query = """
+		SELECT *
+		FROM "Biomes"
+		WHERE "id" = %s;
+	"""
+	await cursor.execute(query, (biome_id,))
+
+	biome_dict: dict = await cursor.fetchone()
+	return Biome.from_dict(**biome_dict)
+
+
+@connect
 async def get_biomes(cursor: psycopg.AsyncCursor) -> list[Biome]:
 	query = """
 		SELECT *

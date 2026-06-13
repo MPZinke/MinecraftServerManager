@@ -32,7 +32,11 @@
 				{% for player in players %}
 					<tr>
 						<td>
-							{{ player.name }}
+							<a
+								href="/players/{{ player.id }}"
+							>
+								{{ player.name }}
+							</a>
 						</td>
 						<td>
 							{{ player.uuid }}

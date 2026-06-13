@@ -16,6 +16,7 @@ __author__ = "MPZinke"
 
 import re
 from typing import Optional, Tuple
+import uuid
 
 
 from database.classes import Player
@@ -71,7 +72,7 @@ async def get_online_players(container_id: str) -> Optional[list[Player]]:
 	if(match is None):
 		return None
 
-	return [Player(0, name, uuid) for name, uuid in re.findall(player_info_regex, match.groupdict()["online_players"])]
+	return [Player(0, name, uuid.UUID(uuid_str)) for name, uuid_str in re.findall(player_info_regex, match.groupdict()["online_players"])]
 
 
 async def get_seed(container_id: str) -> Optional[int]:

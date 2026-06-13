@@ -1,0 +1,78 @@
+<html>
+	<title>
+		{{ player.name }}
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/players"
+		>
+			Players
+		</a>
+		&gt; {{ player.name }}
+	</header>
+
+	<body>
+		<h1>
+			{{ player.name }}
+		</h1>
+
+		<table>
+			<tbody>
+				<tr>
+					<td>
+						Name
+					</td>
+					<td>
+						{{ player.name }}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						UUID
+					</td>
+					<td>
+						{{ player.uuid }}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						World
+					</td>
+					<td
+						id="world-td"
+					></td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>
+
+
+<script>
+	const WORLD_TD = document.getElementById("world-td");
+
+	async function get_player_world()
+	{
+		let response = await fetch(
+			`/players/{{ player.id }}/world`,
+			{
+				method: `GET`,
+				headers: {"Content-Type": "application/json"},
+			}
+		);
+		let world_info = await response.text();
+		WORLD_TD.innerHTML = world_info;
+	}
+
+
+	get_player_world();
+	setInterval(get_player_world, 5000);
+
+</script>

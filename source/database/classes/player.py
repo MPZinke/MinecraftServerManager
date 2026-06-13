@@ -14,6 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+import json
 from typing import TypeVar
 
 
@@ -43,3 +44,11 @@ class Player:
 
 	def __iter__(self) -> dict:
 		yield from {"id": self.id, "name": self.name, "uuid": self.uuid}.items()
+
+
+	def __repr__(self) -> str:
+		return str(self)
+
+
+	def __str__(self) -> str:
+		return json.dumps(dict(self), default=str)

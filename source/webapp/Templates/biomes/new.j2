@@ -1,0 +1,82 @@
+<html>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/biomes"
+		>
+			Biomes
+		</a>
+		&gt; New
+	</header>
+
+	<body>
+
+		<form
+			method="POST"
+			enctype="multipart/form-data"
+		>
+			<table
+			>
+				<tbody>
+					<tr>
+						<td>
+							Title
+						</td>
+						<td>
+							<input
+								name="title-input"
+							/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Dimension
+						</td>
+						<td>
+							<select
+								name="dimension-select"
+							>
+								<option
+									value="overworld"
+								>
+									Overworld
+								</option>
+								<option
+									value="the_nether"
+								>
+									The Nether
+								</option>
+								<option
+									value="the_end"
+								>
+									The End
+								</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Description
+						</td>
+						<td>
+							<textarea
+								name="description-textarea"
+							></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<button
+				type="submit"
+			>
+				Add
+			</button>
+		</form>
+	</body>
+</html>

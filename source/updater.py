@@ -52,9 +52,10 @@ async def update_loop():
 	while(True):
 		try:
 			await update_world_statuses()
-			await asyncio.sleep(60)
 
 		except Exception:
 			logger.error(traceback.format_exc())
+
+		await asyncio.sleep(60)
 
 	logger.info("Updater stopped.")

@@ -1,0 +1,55 @@
+<html>
+	<title>
+		{{ biome.title }}
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/biomes"
+		>
+			Biomes
+		</a>
+		&gt; {{ biome.title }}
+	</header>
+
+	<body>
+		<h1>
+			{{ biome.title }}
+		</h1>
+
+		<table>
+			<tbody>
+				<tr>
+					<td>
+						Title
+					</td>
+					<td>
+						{{ biome.title }}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Dimension
+					</td>
+					<td>
+						{{ biome.dimension.replace("_", " ").capitalize() }}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Description
+					</td>
+					<td>
+						{{ biome.description }}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>

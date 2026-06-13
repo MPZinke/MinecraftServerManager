@@ -1,0 +1,38 @@
+<table>
+	<tr>
+		<td>
+			Name
+		</td>
+		<td>
+			<a
+				href="/worlds/{{ world.id }}"
+			>
+				{{ world.name }}
+			</a>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Container ID
+		</td>
+		<td>
+			{{ world.container_id }}
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Dimension
+		</td>
+		<td>
+			{{ dimension }}
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Location
+		</td>
+		<td>
+			[{{ location[0] }}, {{ location[1] }}, {{ location[2] }}]
+		</td>
+	</tr>
+</table>

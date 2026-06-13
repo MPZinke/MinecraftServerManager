@@ -100,6 +100,16 @@
 			</tr>
 			<tr>
 				<td>
+					stats
+				</td>
+				<td
+					id="stats-td"
+				>
+					TODO
+				</td>
+			</tr>
+			<tr>
+				<td>
 					created
 				</td>
 				<td>
@@ -136,7 +146,9 @@
 				<td>
 					online players
 				</td>
-				<td>
+				<td
+					id="online_players-td"
+				>
 					<table
 						id="online_players-table"
 					>
@@ -184,7 +196,7 @@
 
 <script>
 	const CONTAINER_ID_TD = document.getElementById("container_id-td");
-	const ONLINE_PLAYERS_TABLE = document.getElementById("online_players-table");
+	const ONLINE_PLAYERS_TD = document.getElementById("online_players-td");
 	const PORT_TD = document.getElementById("port-td");
 	const RUN_BUTTON_DIV = document.getElementById("run_button-td");
 	const STATE_TD = document.getElementById("state-td");
@@ -194,20 +206,15 @@
 	async function get_online_players()
 	{
 		let response = await fetch(
-			`/worlds/{{ world.id }}/players/online/json`,
+			`/worlds/{{ world.id }}/players/online`,
 			{
 				method: `GET`,
 				headers: {"Content-Type": "application/json"},
 			}
 		);
-		let response_json = await response.json();
+		let response_body = await response.text();
 
-		for(var index = 0; index < response_json.length; index++)
-		{
-			let player_row = document.createElement("tr");
-			player_row.innerHTML = `<td>${response_json[index].name}</td>`;
-			ONLINE_PLAYERS_TABLE.append(player_row);
-		}
+		ONLINE_PLAYERS_TD.innerHTML = response_body;
 	}
 
 
@@ -241,4 +248,5 @@
 	{% endif %}
 
 	get_online_players();
+	setInterval(get_online_players, 5000);
 </script>
