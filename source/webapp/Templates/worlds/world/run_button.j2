@@ -1,27 +1,28 @@
 
-			{% if(world.state != "offline") %}
-				<form
-					action="/worlds/{{ world.id }}/stop"
-					method="POST"
-					style="margin-bottom: 0px;"
-				>
-					<button
-						style="color: #D00000;"
-					>
-						⏹
-					</button>
-				</form>
-			{% else %}
-				<form
-					action="/worlds/{{ world.id }}/start"
-					method="POST"
-					style="margin-bottom: 0px;"
-				>
-					<button
-						style="color: #00D000;"
-					>
-						▶
-					</button>
-				</form>
-			{% endif %}
-			
+{% if(world.state == "running") %}
+	<form
+		action="/worlds/{{ world.id }}/stop"
+		method="POST"
+		style="margin-bottom: 0px;"
+	>
+		<button
+			style="color: #D00000;"
+		>
+			⏹
+		</button>
+	</form>
+{% elif(world.state == "offline") %}
+	<form
+		action="/worlds/{{ world.id }}/start"
+		method="POST"
+		style="margin-bottom: 0px;"
+	>
+		<button
+			style="color: #00D000;"
+		>
+			▶
+		</button>
+	</form>
+{% else %}
+	...
+{% endif %}

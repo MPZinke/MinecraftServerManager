@@ -23,7 +23,7 @@ from quart import render_template, Blueprint
 
 from database.classes import Player
 from database.queries.players import get_player, get_players
-from database.queries.worlds import get_running_worlds
+from database.queries.worlds import get_running_worlds_info
 from docker.minecraft import get_online_players, get_player_location
 
 
@@ -45,7 +45,7 @@ async def GET_players_player(player_id: int):
 @players_blueprint.get("/players/<int:player_id>/world")
 async def GET_players_player_world_json(player_id: int):
 	player_promise: Awaitable[Player] = get_player(player_id)
-	running_worlds_promise: Awaitable[Player] = get_running_worlds()
+	running_worlds_promise: Awaitable[Player] = get_running_worlds_info()
 
 	player, running_worlds = await asyncio.gather(player_promise, running_worlds_promise)  # : Player, list[World]
 	world_players_promises: list[Awaitable[list[Player]]] = []

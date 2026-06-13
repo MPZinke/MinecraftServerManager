@@ -31,7 +31,7 @@ from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
 	get_world,
-	get_worlds,
+	get_world_info,
 	new_world,
 	set_world_stopping,
 	set_world_running,
@@ -54,13 +54,13 @@ worlds_world_blueprint.register_blueprint(worlds_world_locations_blueprint)
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>")
 async def GET_worlds_world(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_info(world_id)
 	return await render_template("worlds/world/index.j2", world=world)
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
-	world = await get_world(world_id)
+	world = await get_world_info(world_id)
 	if(world.state == "offline"):
 		await delete_world(world_id)
 	return redirect("/worlds")
@@ -97,7 +97,7 @@ async def POST_worlds_world_start(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
-	world = await get_world(world_id)
+	world = await get_world_info(world_id)
 
 	return jsonify(
 		{
@@ -111,7 +111,7 @@ async def GET_worlds_world_state(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
 async def POST_worlds_world_stop(world_id: int):
-	world = await get_world(world_id)
+	world = await get_world_info(world_id)
 
 	if(world.state == "running"):
 		await set_world_stopping(world)
@@ -147,7 +147,7 @@ async def GET_worlds_world_download(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")
 async def GET_worlds_world_players_online(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_info(world_id)
 
 	if(world.state != "running"):
 		return {"error": f"World {world_id} is not running."}
@@ -171,7 +171,7 @@ async def GET_worlds_world_players_online(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/stats")
 async def GET_worlds_world_stats(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_info(world_id)
 	container = Container(world)
 	stats: dict = await container.stats()
 	memory = stats["memory_stats"]["usage"] / (1024 ** 2)

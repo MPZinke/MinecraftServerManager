@@ -7,7 +7,7 @@ from typing import Awaitable
 
 
 from database.classes import World
-from database.queries.worlds import get_running_worlds, set_world_container, set_world_state, set_world_offline
+from database.queries.worlds import get_running_worlds_info, set_world_container, set_world_state, set_world_offline
 from docker import Container
 from docker.api import request_json
 from logger import logger
@@ -15,7 +15,7 @@ from logger import logger
 
 
 async def update_world_statuses() -> None:
-	worlds_promise: Awaitable[list[World]] = get_running_worlds()
+	worlds_promise: Awaitable[list[World]] = get_running_worlds_info()
 	# FROM: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Container/operation/ContainerList
 	containers_promise: Awaitable[list[dict]] = request_json(
 		"containers/json",

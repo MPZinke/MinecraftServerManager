@@ -25,7 +25,7 @@
 
 		<a
 			href="/worlds/{{ world.id }}/commands"
-			{% if world.state != "running" %}
+			{% if(world.state != "running") %}
 				disabled
 			{% endif %}
 		>
@@ -36,7 +36,7 @@
 
 		<a
 			href="/worlds/{{ world.id }}/locations"
-			{% if world.state != "running" %}
+			{% if(world.state != "running") %}
 				disabled
 			{% endif %}
 		>
@@ -93,7 +93,7 @@
 				<td
 					id="last_played-td"
 				>
-					{% if world.last_played is not none %}
+					{% if(world.last_played is not none) %}
 						{{ world.last_played.strftime("%Y-%m-%d %H:%M:%S") }}
 					{% else %}
 						-
@@ -105,7 +105,7 @@
 					Seed
 				</td>
 				<td>
-					{% if world.seed is not none %}
+					{% if(world.seed is not none) %}
 						{{ world.seed }}
 					{% else %}
 						-
@@ -198,7 +198,7 @@
 	}
 
 
-	{% if world.state not in ["offline", "running"] %}
+	{% if(world.state not in ["offline", "running"]) %}
 		const INTERVAL = setInterval(update_state, 1000);
 	{% else %}
 		get_online_players();

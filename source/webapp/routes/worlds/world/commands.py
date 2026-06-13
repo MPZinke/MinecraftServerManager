@@ -23,7 +23,7 @@ from quart import redirect, render_template, request, Blueprint
 
 from database.classes import Player, World
 from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world
+from database.queries.worlds import get_world_info
 from docker.minecraft import op_player
 
 
@@ -32,7 +32,7 @@ worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', _
 
 @worlds_world_commands_blueprint.get("/worlds/<int:world_id>/commands")
 async def GET_worlds_world_commands(world_id: int):
-	world_promise: Awaitable[World] = get_world(world_id)
+	world_promise: Awaitable[World] = get_world_info(world_id)
 	players_promise: Awaitable[list[Player]] = get_players()
 	world, players = await asyncio.gather(world_promise, players_promise)  # : World, list[Player]
 
@@ -44,7 +44,7 @@ async def POST_worlds_world_commands_op(world_id: int):
 	form = await request.form
 	player_id: int = int(form["player-select"])
 
-	world_promise: Awaitable[World] = get_world(world_id)
+	world_promise: Awaitable[World] = get_world_info(world_id)
 	player_promise: Awaitable[Player] = get_player(player_id)
 	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
 

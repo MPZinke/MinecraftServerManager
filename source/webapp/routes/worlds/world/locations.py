@@ -25,7 +25,7 @@ from database.classes import Biome, Location, Player, World
 from database.queries.biomes import get_biomes
 from database.queries.locations import delete_location, get_location, get_locations_for_world, new_location
 from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world
+from database.queries.worlds import get_world_info
 from docker.minecraft import get_player_location, teleport_player
 
 
@@ -34,14 +34,14 @@ worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint',
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
 async def GET_worlds_world_locations(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_info(world_id)
 	locations: list[Location] = await get_locations_for_world(world)
 	return await render_template("worlds/world/locations/index.j2", world=world, locations=locations)
 
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
 async def GET_worlds_world_locations_new(world_id: int):
-	world_promise: Awaitable[World] = get_world(world_id)
+	world_promise: Awaitable[World] = get_world_info(world_id)
 	biomes_promise: Awaitable[list[Biome]] = get_biomes()
 	players_promise: Awaitable[list[Player]] = get_players()
 	# World, list[Biome], list[Player]
@@ -57,7 +57,7 @@ async def POST_worlds_world_locations_new(world_id: int):
 	biome: Optional[int] = int(form["biome-select"] or "0") or None
 	notes: str = form["notes-textarea"]
 
-	world_promise: Awaitable[World] = get_world(world_id)
+	world_promise: Awaitable[World] = get_world_info(world_id)
 	player_promise: Awaitable[Player] = get_player(player_id)
 	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
 	if(world.state == "running"):

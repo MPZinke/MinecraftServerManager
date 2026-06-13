@@ -27,7 +27,7 @@ from quart import jsonify, redirect, render_template, request, send_file, Bluepr
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
-from database.queries.worlds import get_worlds
+from database.queries.worlds import get_worlds_info
 from docker import Container, Image
 from webapp.routes.worlds.world import worlds_world_blueprint
 from webapp.routes.worlds.new import worlds_new_blueprint
@@ -40,5 +40,5 @@ worlds_blueprint.register_blueprint(worlds_new_blueprint)
 
 @worlds_blueprint.get("/worlds")
 async def GET_worlds():
-	worlds: list[World] = await get_worlds()
+	worlds: list[World] = await get_worlds_info()
 	return await render_template("worlds/index.j2", worlds=worlds)
