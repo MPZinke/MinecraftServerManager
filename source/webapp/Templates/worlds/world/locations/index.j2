@@ -59,7 +59,7 @@
 				{% for location in locations %}
 					<tr>
 						<td>
-							{{ location.title }}
+							{{ location.title.title() }}
 						</td>
 						<td>
 							{{ location.location[0] }}, {{ location.location[1] }}, {{ location.location[2] }}

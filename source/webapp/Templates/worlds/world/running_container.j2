@@ -1,0 +1,39 @@
+{% if world.state == "running" %}
+	<table>
+		<tr>
+			<td>
+				Container
+			</td>
+			<td>
+				{{ world.container_id }}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Port
+			</td>
+			<td>
+				{{ world.port }}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Stats
+			</td>
+			<td
+				id="stats-td"
+			>
+					TODO
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Online Players
+			</td>
+			<td
+				id="online_players-td"
+			>
+			</td>
+		</tr>
+	</table>
+{% endif %}

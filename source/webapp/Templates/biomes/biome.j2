@@ -30,7 +30,7 @@
 						Title
 					</td>
 					<td>
-						{{ biome.title }}
+						{{ biome.title.title() }}
 					</td>
 				</tr>
 				<tr>
@@ -38,7 +38,7 @@
 						Dimension
 					</td>
 					<td>
-						{{ biome.dimension.replace("_", " ").capitalize() }}
+						{{ biome.dimension.replace("_", " ").title() }}
 					</td>
 				</tr>
 				<tr>

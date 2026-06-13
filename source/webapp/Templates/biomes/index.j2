@@ -46,11 +46,11 @@
 							<a
 								href="/biomes/{{ biome.id }}"
 							>
-								{{ biome.title }}
+								{{ biome.title.title() }}
 							</a>
 						</td>
 						<td>
-							{{ " ".join([part.capitalize() for part in biome.dimension.split("_")]) }}
+							{{ biome.dimension.replace("_", " ").title() }}
 						</td>
 						<td>
 							{{ biome.description }}

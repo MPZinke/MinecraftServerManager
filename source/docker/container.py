@@ -122,6 +122,14 @@ class Container:
 			raise Exception(f"Failed to run docker container.") from cause
 
 
+	async def stats(self) -> dict:
+		return await request_json(
+			f"containers/{self.world.container_id}/stats",
+			headers={"Content-Type": "application/json"},
+			params={"one-shot": "true", "stream": "false"}
+		)
+
+
 	async def stop(self) -> None:
 		"""
 		Stop this container.

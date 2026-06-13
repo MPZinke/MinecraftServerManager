@@ -39,7 +39,7 @@ async def get_biomes(cursor: psycopg.AsyncCursor) -> list[Biome]:
 	query = """
 		SELECT *
 		FROM "Biomes"
-		ORDER BY "title";
+		ORDER BY "dimension", "title";
 	"""
 
 	await cursor.execute(query)

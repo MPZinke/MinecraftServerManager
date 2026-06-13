@@ -101,10 +101,9 @@ async def GET_worlds_world_state(world_id: int):
 
 	return jsonify(
 		{
-			"container_id": world.container_id if(world.container_id is not None) else "-",
 			"last_played": world.last_played.strftime("%Y-%m-%d %H:%M:%S") if(world.last_played is not None) else "-",
-			"port": world.port if(world.port is not None) else "-",
-			"run_button": await render_template("worlds/world/run_button.j2", world=world),
+			"run_button_html": await render_template("worlds/world/run_button.j2", world=world),
+			"running_container_html": await render_template("worlds/world/running_container.j2", world=world),
 			"state": world.state,
 		}
 	)
@@ -147,7 +146,7 @@ async def GET_worlds_world_download(world_id: int):
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")
-async def GET_worlds_world_players_online_json(world_id: int):
+async def GET_worlds_world_players_online(world_id: int):
 	world: World = await get_world(world_id)
 
 	if(world.state != "running"):
@@ -168,3 +167,12 @@ async def GET_worlds_world_players_online_json(world_id: int):
 				break
 
 	return await render_template("worlds/world/players.j2", players=online_players)
+
+
+@worlds_world_blueprint.get("/worlds/<int:world_id>/stats")
+async def GET_worlds_world_stats(world_id: int):
+	world: World = await get_world(world_id)
+	container = Container(world)
+	stats: dict = await container.stats()
+	memory = stats["memory_stats"]["usage"] / (1024 ** 2)
+	return stats
