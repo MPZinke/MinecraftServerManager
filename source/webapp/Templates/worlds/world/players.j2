@@ -1,17 +1,21 @@
-<table>
-	{% for player in players %}
-		<tr>
-			<td>
-				{% if(player.id != 0) %}
-					<a
-						href="/players/{{ player.id }}"
-					>
+{% if players | length == 0 %}
+	-
+{% else %}
+	<table>
+		{% for player in players %}
+			<tr>
+				<td>
+					{% if(player.id != 0) %}
+						<a
+							href="/players/{{ player.id }}"
+						>
+							{{ player.name }}
+						</a>
+					{% else %}
 						{{ player.name }}
-					</a>
-				{% else %}
-					{{ player.name }}
-				{% endif %}
-			</td>
-		</tr>
-	{% endfor %}
-</table>
+					{% endif %}
+				</td>
+			</tr>
+		{% endfor %}
+	</table>
+{% endif %}

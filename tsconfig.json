@@ -1,0 +1,15 @@
+{
+	"compilerOptions":
+	{
+		"module": "es6",  // FROM: https://stackoverflow.com/a/78391195
+		"noImplicitAny": true,
+		// "outDir": "src/Scripts/",
+		"preserveConstEnums": true,
+		"rootDir": "source/webapp/Templates/",
+		"removeComments": true,
+		"sourceMap": false,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"target": "es6"
+	}
+}
