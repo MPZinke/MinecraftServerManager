@@ -93,7 +93,7 @@ async def POST_worlds_world_locations_location_delete(world_id: int, location_id
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/tp")
 async def POST_worlds_world_locations_location_tp(world_id: int, location_id: int):
-	world_promise: Awaitable[World] = get_world(world_id)
+	world_promise: Awaitable[World] = get_world_info(world_id)
 	location_promise: Awaitable[Location] = get_location(location_id)
 	world, location = await asyncio.gather(world_promise, location_promise)  # : World, Location
 
