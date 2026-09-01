@@ -101,9 +101,12 @@ async def GET_worlds_world_state(world_id: int):
 
 	return jsonify(
 		{
+			"html": {
+				"delete_button": await render_template("worlds/world/delete_button.j2", world=world),
+				"run_button": await render_template("worlds/world/run_button.j2", world=world),
+				"running_container": await render_template("worlds/world/running_container.j2", world=world),
+			},
 			"last_played": world.last_played.strftime("%Y-%m-%d %H:%M:%S") if(world.last_played is not None) else "-",
-			"run_button_html": await render_template("worlds/world/run_button.j2", world=world),
-			"running_container_html": await render_template("worlds/world/running_container.j2", world=world),
 			"state": world.state,
 		}
 	)
@@ -154,17 +157,18 @@ async def GET_worlds_world_players_online(world_id: int):
 
 	online_players_promise: Awaitable[list[Player]] = get_online_players(world.container_id)
 	players_promise: Awaitable[list[Player]] = get_players()
-	# : list[Player], list[Player]
+	# : Optional[list[Player]], list[Player]
 	online_players, players = await asyncio.gather(online_players_promise, players_promise)
 
-	if(len(online_players)):
-		asyncio.create_task(add_unknown_players(online_players))
+	if(online_players is not None):
+		if(len(online_players)):
+			asyncio.create_task(add_unknown_players(online_players))
 
-	for online_player in online_players:
-		for player in players:
-			if(online_player.uuid == player.uuid):
-				online_player.id = player.id
-				break
+		for online_player in online_players:
+			for player in players:
+				if(online_player.uuid == player.uuid):
+					online_player.id = player.id
+					break
 
 	return await render_template("worlds/world/players.j2", players=online_players)
 

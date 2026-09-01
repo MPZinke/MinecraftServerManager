@@ -23,10 +23,17 @@ from quart import redirect, render_template, request, Blueprint
 
 from database.classes import Biome, Location, Player, World
 from database.queries.biomes import get_biomes
-from database.queries.locations import delete_location, get_location, get_locations_for_world, new_location
+from database.queries.locations import (
+	delete_location,
+	favorite_location,
+	get_location,
+	get_locations_for_world,
+	new_location,
+	unfavorite_location,
+)
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world_info
-from docker.minecraft import get_player_location, teleport_player
+from docker.minecraft import get_online_players, get_player_location, teleport_player
 
 
 worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)
@@ -35,8 +42,17 @@ worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint',
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
 async def GET_worlds_world_locations(world_id: int):
 	world: World = await get_world_info(world_id)
-	locations: list[Location] = await get_locations_for_world(world)
-	return await render_template("worlds/world/locations/index.j2", world=world, locations=locations)
+	locations_promise: Awaitable[list[Location]] = get_locations_for_world(world)
+	online_players: list[Player] = []
+	if(world.state == "running"):
+		online_players = await get_online_players(world.container_id)
+	locations: list[Location] = await locations_promise
+	return await render_template(
+		"worlds/world/locations/index.j2",
+		world=world,
+		locations=locations,
+		online_players=online_players
+	)
 
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
@@ -88,6 +104,18 @@ async def POST_worlds_world_locations_new(world_id: int):
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/delete")
 async def POST_worlds_world_locations_location_delete(world_id: int, location_id: int):
 	await delete_location(location_id)
+	return redirect(f"/worlds/{world_id}/locations")
+
+
+@worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/favorite")
+async def POST_worlds_world_locations_location_favorite(world_id: int, location_id: int):
+	await favorite_location(location_id)
+	return redirect(f"/worlds/{world_id}/locations")
+
+
+@worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/unfavorite")
+async def POST_worlds_world_locations_location_unfavorite(world_id: int, location_id: int):
+	await unfavorite_location(location_id)
 	return redirect(f"/worlds/{world_id}/locations")
 
 

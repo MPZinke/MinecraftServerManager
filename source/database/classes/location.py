@@ -14,6 +14,7 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+from datetime import datetime
 from typing import Tuple, TypeVar
 
 
@@ -29,6 +30,7 @@ class Location:
 		title: str,
 		location: Tuple[float, float, float],
 		dimension: str,
+		favorited: datetime,
 		world: World,
 		biome: Biome,
 		notes: str,
@@ -37,6 +39,7 @@ class Location:
 		self.title: str = title
 		self.location: Tuple[float, float, float] = location
 		self.dimension: str = dimension
+		self.favorited: datetime = favorited
 		self.world: World = world
 		self.biome: Biome = biome
 		self.notes: str = notes
@@ -49,6 +52,7 @@ class Location:
 			title=location_dict["title"],
 			location=location_dict["location"],
 			dimension=location_dict["dimension"],
+			favorited=location_dict["favorited"],
 			world=location_dict["world"],
 			biome=location_dict["biome"],
 			notes=location_dict["notes"],

@@ -59,6 +59,35 @@
 				{% for location in locations %}
 					<tr>
 						<td>
+							{% if location.favorited %}
+								<form
+									action="/worlds/{{ world.id }}/locations/{{ location.id }}/unfavorite"
+									method="POST"
+									style="margin: 0px;"
+								>
+									<button
+										onmouseover="this.innerHTML = `&#9734;`;"
+										onmouseout="this.innerHTML = `&#9733;`;"
+									>
+										&#9733;
+									</button>
+								</form>
+							{% else %}
+								<form
+									action="/worlds/{{ world.id }}/locations/{{ location.id }}/favorite"
+									method="POST"
+									style="margin: 0px;"
+								>
+									<button
+										onmouseover="this.innerHTML = `&#9733;`;"
+										onmouseout="this.innerHTML = `&#9734;`;"
+									>
+										&#9734;
+									</button>
+								</form>
+							{% endif %}
+						</td>
+						<td>
 							{{ location.title.title() }}
 						</td>
 						<td>
@@ -69,7 +98,7 @@
 						</td>
 						<td>
 							{% if(location.biome.title is not none) %}
-								{{ location.biome.title }}
+								{{ location.biome.title.title() }}
 							{% else %}
 								-
 							{% endif %}
@@ -77,30 +106,35 @@
 						<td>
 							{{ location.notes }}
 						</td>
-						<td>
-							<form
-								action="/worlds/{{ world.id }}/locations/{{ location.id }}/tp"
-								method="POST"
-								style="margin-bottom: 0px;"
-							>
-								<select
-									name="player-select"
+						{% if world.state == "running" %}
+							<td>
+								<form
+									action="/worlds/{{ world.id }}/locations/{{ location.id }}/tp"
+									method="POST"
+									style="margin-bottom: 0px;"
 								>
-									<option
-										value="MPZinke"
+									<select
+										name="player-select"
 									>
-										MPZinke
-									</option>
-								</select>
-								<button>
-									Teleport
-								</button>
-							</form>
-						</td>
+										{% for player in online_players %}
+											<option
+												value="{{ player.uuid }}"
+											>
+												{{ player.name }}
+											</option>
+										{% endfor %}
+									</select>
+									<button>
+										Teleport
+									</button>
+								</form>
+							</td>
+						{% endif %}
 						<td>
 							<form
 								action="/worlds/{{ world.id }}/locations/{{ location.id }}/delete"
 								method="POST"
+								onsubmit="return confirm(`Are you sure you want to delete location '{{ location.name }}'?`);"
 								style="margin-bottom: 0px;"
 							>
 								<button>

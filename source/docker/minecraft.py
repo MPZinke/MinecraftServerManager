@@ -72,7 +72,8 @@ async def get_online_players(container_id: str) -> Optional[list[Player]]:
 	if(match is None):
 		return None
 
-	return [Player(0, name, uuid.UUID(uuid_str)) for name, uuid_str in re.findall(player_info_regex, match.groupdict()["online_players"])]
+	online_players_matches: list[tuple[str, str]] = re.findall(player_info_regex, match.groupdict()["online_players"])
+	return [Player(0, name, uuid.UUID(uuid_str)) for name, uuid_str in online_players_matches]
 
 
 async def get_seed(container_id: str) -> Optional[int]:
@@ -123,3 +124,18 @@ async def teleport_player(container_id: str, player: str, location: Tuple[int, i
 		# FROM: https://minecraft.fandom.com/wiki/Commands/tp
 		await connection.send(f"execute in {dimension} run tp {player} {" ".join(map(str, location))}")
 		await connection.match(regex, timeout=5.0)
+
+
+async def time_set_0(container_id: str) -> None:
+	# EG. `[22:38:32] [Server thread/INFO]: Made MPZinke a server operator`
+	# OR  `[02:38:56] [Server thread/INFO]: Nothing changed. The player already is an operator`
+	log_regex = r"Set the time to 0"
+	regex = rf"{LOG_FORMAT_INFO_REGEX}: {log_regex}"
+	async with Attach(container_id) as connection:
+		await connection.send("time set 0")  # FROM: https://minecraft.fandom.com/wiki/Commands/op
+		result = await connection.match(regex, timeout=5.0)
+
+	if(result is not None):
+		logger.info(f"Successfully time set to 0.")
+	else:
+		logger.error(f"Failed to set time to 0.")

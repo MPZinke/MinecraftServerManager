@@ -1,6 +1,6 @@
 
+const DELETE_TD = document.getElementById("delete-td")!;
 const LAST_PLAYED_TD = document.getElementById("last_played-td")!;
-const ONLINE_PLAYERS_TD = document.getElementById("online_players-td")!;
 const RUN_BUTTON_DIV = document.getElementById("run_button-td")!;
 const RUNNING_CONTAINER_TD = document.getElementById("running_container-td")!;
 const STATE_TD = document.getElementById("state-td")!;
@@ -8,16 +8,19 @@ const STATE_TD = document.getElementById("state-td")!;
 
 async function get_online_players()
 {
-	let response = await fetch(
-		`/worlds/{{ world.id }}/players/online`,
-		{
-			method: `GET`,
-			headers: {"Content-Type": "application/json"},
-		}
-	);
-	let response_body = await response.text();
-
-	ONLINE_PLAYERS_TD.innerHTML = response_body;
+	let online_players_td = document.getElementById("online_players-td");
+	if(online_players_td != null)
+	{
+		let response = await fetch(
+			`/worlds/{{ world.id }}/players/online`,
+			{
+				method: `GET`,
+				headers: {"Content-Type": "application/json"},
+			}
+		);
+		let response_body = await response.text();
+		online_players_td.innerHTML = response_body;
+	}
 }
 
 
@@ -33,9 +36,10 @@ async function update_state()
 
 	let response_json = await response.json();
 
+	DELETE_TD.innerHTML = response_json.html.delete_button;
+	RUNNING_CONTAINER_TD.innerHTML = response_json.html.running_container;
+	RUN_BUTTON_DIV.innerHTML = response_json.html.run_button;
 	LAST_PLAYED_TD.innerHTML = response_json.last_played;
-	RUNNING_CONTAINER_TD.innerHTML = response_json.running_container_html;
-	RUN_BUTTON_DIV.innerHTML = response_json.run_button_html;
 	STATE_TD.innerHTML = response_json.state;
 
 	if(response_json.state == "running" || response_json.state == "offline")
@@ -67,7 +71,7 @@ function edit_value(
 		return;
 	}
 
-	let input_string = `
+	let input_string: string = `
 		<form
 			action="${endpoint}"
 			method="POST"

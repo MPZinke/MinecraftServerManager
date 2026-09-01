@@ -28,6 +28,12 @@ async def delete_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict
 
 
 @connect
+async def favorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
+	query = """UPDATE "Locations" SET "favorited" = CURRENT_TIMESTAMP WHERE "id" = %s;"""
+	await cursor.execute(query, (location_id,))
+
+
+@connect
 async def get_location(cursor: psycopg.AsyncCursor, location_id: int) -> list[Location]:
 	query = """
 		SELECT
@@ -64,7 +70,8 @@ async def get_locations_for_world(cursor: psycopg.AsyncCursor, world: World) -> 
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
-		WHERE "Worlds.id" = %s;
+		WHERE "Worlds.id" = %s
+		ORDER BY "favorited" DESC NULLS LAST, "title" ASC;
 	"""
 	await cursor.execute(query, (world.id,))
 
@@ -93,3 +100,9 @@ async def new_location(cursor: psycopg.AsyncCursor, location: World) -> None:
 	)
 
 	location.id = (await cursor.fetchone())["id"]
+
+
+@connect
+async def unfavorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
+	query = """UPDATE "Locations" SET "favorited" = NULL WHERE "id" = %s;"""
+	await cursor.execute(query, (location_id,))

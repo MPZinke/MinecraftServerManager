@@ -1,4 +1,4 @@
-{% if players | length == 0 %}
+{% if players is none or players | length == 0 %}
 	-
 {% else %}
 	<table>

@@ -102,6 +102,7 @@ CREATE TABLE "Locations"
 	"title" TEXT NOT NULL,
 	"location" INT[3] NOT NULL,
 	"dimension" Dimension NOT NULL DEFAULT 'overworld',
+	"favorited" TIMESTAMP DEFAULT NULL,  -- TODO: Add
 	"Biomes.id" INT DEFAULT NULL REFERENCES "Biomes"("id") ON DELETE CASCADE,
 	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE,
 	"notes" TEXT NOT NULL DEFAULT ''

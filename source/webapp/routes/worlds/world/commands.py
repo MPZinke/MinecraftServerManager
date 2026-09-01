@@ -24,7 +24,7 @@ from quart import redirect, render_template, request, Blueprint
 from database.classes import Player, World
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world_info
-from docker.minecraft import op_player
+from docker.minecraft import op_player, time_set_0
 
 
 worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', __name__)
@@ -50,5 +50,14 @@ async def POST_worlds_world_commands_op(world_id: int):
 
 	if(world.state == "running"):
 		await op_player(world.container_id, player.name)
+
+	return redirect(f"/worlds/{world_id}/commands")
+
+
+@worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/time_set_0")
+async def POST_worlds_world_commands_time_set_0(world_id: int):
+	world: World = await get_world_info(world_id)
+	if(world.state == "running"):
+		await time_set_0(world.container_id)
 
 	return redirect(f"/worlds/{world_id}/commands")
