@@ -71,7 +71,7 @@ async def get_locations_for_world(cursor: psycopg.AsyncCursor, world: World) -> 
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
 		WHERE "Worlds.id" = %s
-		ORDER BY "favorited" DESC NULLS LAST, "title" ASC;
+		ORDER BY "favorited" ASC NULLS LAST, "title" ASC;
 	"""
 	await cursor.execute(query, (world.id,))
 
