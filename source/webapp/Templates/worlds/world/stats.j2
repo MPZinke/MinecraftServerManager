@@ -1,0 +1,18 @@
+<table>
+	<tr>
+		<td>
+			CPU
+		</td>
+		<td>
+			{{ stats["cpu"] | round(2) }} %
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Memory
+		</td>
+		<td>
+			{{ (stats["memory"] / (1024 ** 2)) | round(2) }} MiB
+		</td>
+	</tr>
+</table>

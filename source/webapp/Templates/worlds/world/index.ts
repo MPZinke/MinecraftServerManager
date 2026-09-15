@@ -24,7 +24,23 @@ async function get_online_players()
 }
 
 
+async function get_stats()
+{
+	let stats_td = document.getElementById("stats-td");
+	if(stats_td != null)
+	{
+		let response = await fetch(`/worlds/{{ world.id }}/stats`, {method: `GET`});
+
+		let response_body = await response.text();
+		stats_td.innerHTML = response_body;
+	}
+}
+
+
 async function update_state()
+/*
+Only called in a state transition.
+*/
 {
 	let response = await fetch(
 		`/worlds/{{ world.id }}/state/json`,
@@ -49,11 +65,14 @@ async function update_state()
 	if(response_json.state == "running")
 	{
 		GET_ONLINE_PLAYERS_INTERVAL = setInterval(get_online_players, 5000);
+		GET_STATS_INTERVAL = setInterval(get_stats, 5000);
 		get_online_players();
+		get_stats();
 	}
 	if(response_json.state == "offline")
 	{
 		clearInterval(GET_ONLINE_PLAYERS_INTERVAL);
+		clearInterval(GET_STATS_INTERVAL);
 	}
 }
 
@@ -103,8 +122,8 @@ function update_check(event: SubmitEvent, element: HTMLElement, original_value: 
 }
 
 
-
 let GET_ONLINE_PLAYERS_INTERVAL: ReturnType<typeof setInterval>;
+let GET_STATS_INTERVAL: ReturnType<typeof setInterval>;
 let UPDATE_STATE_INTERVAL: ReturnType<typeof setInterval>;
 if({{ world.state | tojson }} !== "offline" && {{ world.state | tojson }} !== "running")
 {
@@ -113,5 +132,7 @@ if({{ world.state | tojson }} !== "offline" && {{ world.state | tojson }} !== "r
 else if({{ world.state | tojson }} === "running")
 {
 	get_online_players();
+	get_stats();
 	GET_ONLINE_PLAYERS_INTERVAL = setInterval(get_online_players, 5000);
+	GET_STATS_INTERVAL = setInterval(get_stats, 5000);
 }

@@ -119,15 +119,22 @@ class Container:
 			logger.info(f"Started container {self.world.container_id}.")
 
 		except Exception as cause:
-			raise Exception(f"Failed to run docker container.") from cause
+			raise Exception("Failed to run docker container.") from cause
 
 
 	async def stats(self) -> dict:
-		return await request_json(
+		stats: dict = await request_json(
 			f"containers/{self.world.container_id}/stats",
 			headers={"Content-Type": "application/json"},
 			params={"one-shot": "true", "stream": "false"}
 		)
+
+		formatted_stats = {
+			"cpu": stats["cpu_stats"]["cpu_usage"]["total_usage"] / stats["cpu_stats"]["system_cpu_usage"] * 100,
+			"memory": stats["memory_stats"]["usage"],
+		}
+		return formatted_stats
+
 
 
 	async def stop(self) -> None:

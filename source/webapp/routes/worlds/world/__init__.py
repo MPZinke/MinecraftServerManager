@@ -178,5 +178,4 @@ async def GET_worlds_world_stats(world_id: int):
 	world: World = await get_world_info(world_id)
 	container = Container(world)
 	stats: dict = await container.stats()
-	memory = stats["memory_stats"]["usage"] / (1024 ** 2)
-	return stats
+	return await render_template("worlds/world/stats.j2", stats=stats)

@@ -1,1 +1,68 @@
-TODO
+<html>
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/versions"
+		>
+			Versions
+		</a>
+		&gt; {{ version.title }}
+	</header>
+
+	<title>
+		{{ version.title }}
+	</title>
+
+	<body>
+		<h1>
+			{{ version.title }}
+		</h1>
+
+		<table>
+			<tr>
+				<td>
+					Tag
+				</td>
+				<td>
+					{{ version.tag }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Title
+				</td>
+				<td>
+					{{ version.title }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Released
+				</td>
+				<td>
+					{{ version.released.strftime("%Y-%m-%d") }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Download from Mojang
+				</td>
+				<td>
+					<a
+						href="{{ version.url }}"
+						download="{{ version.tag }}-server.jar"
+					>
+						<button>
+							⤓
+						</button>
+					</a>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>

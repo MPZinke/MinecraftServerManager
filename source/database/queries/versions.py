@@ -26,8 +26,7 @@ async def get_version(cursor: psycopg.AsyncCursor, version_id: int) -> Version:
 	query = """
 		SELECT *
 		FROM "Versions"
-		WHERE "id" = %s
-		ORDER BY "Versions"."id" ASC;
+		WHERE "id" = %s;
 	"""
 	await cursor.execute(query, (version_id,))
 
@@ -40,7 +39,7 @@ async def get_versions(cursor: psycopg.AsyncCursor) -> list[Version]:
 	query = """
 		SELECT "id", "released", "tag", "title", "url"
 		FROM "Versions"
-		ORDER BY "Versions"."id" ASC;
+		ORDER BY "released" DESC;
 	"""
 	await cursor.execute(query)
 	version_dicts: list[dict] = [version_dict async for version_dict in cursor]

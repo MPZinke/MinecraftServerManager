@@ -13,7 +13,6 @@ from docker.api import request_json
 from logger import logger
 
 
-
 async def update_world_statuses() -> None:
 	worlds_promise: Awaitable[list[World]] = get_running_worlds_info()
 	# FROM: https://docs.docker.com/reference/api/engine/version/v1.47/#tag/Container/operation/ContainerList

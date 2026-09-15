@@ -86,6 +86,7 @@ async def POST_worlds_world_locations_new(world_id: int):
 			id=0,
 			title=title,
 			dimension=dimension,
+			favorited=None,
 			location=location,
 			notes=notes,
 			world=world,

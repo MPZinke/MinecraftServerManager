@@ -21,7 +21,7 @@ from quart import redirect, render_template, request, Blueprint
 
 
 from database.classes import Version
-from database.queries.versions import get_versions, new_version
+from database.queries.versions import get_version, get_versions, new_version
 
 
 versions_blueprint = Blueprint('versions_blueprint', __name__)
@@ -31,6 +31,12 @@ versions_blueprint = Blueprint('versions_blueprint', __name__)
 async def GET_versions():
 	versions = await get_versions()
 	return await render_template("versions/index.j2", versions=versions)
+
+
+@versions_blueprint.get("/versions/<int:version_id>")
+async def GET_versions_version(version_id: int):
+	version: Version = await get_version(version_id)
+	return await render_template("versions/version.j2", version=version)
 
 
 @versions_blueprint.get("/versions/new")

@@ -3,6 +3,7 @@
 -- FROM: https://feedback.minecraft.net/hc/en-us/sections/360001186971?page=1#articles
 --  AND: https://minecraft.fandom.com/wiki/Java_Edition_version_history
 INSERT INTO "Versions" ("released", "tag", "title", "url") VALUES
+('2026-06-16', '26.2', 'Chaos Cubed',  'https://piston-data.mojang.com/v1/objects/823e2250d24b3ddac457a60c92a6a941943fcd6a/server.jar'),
 ('2025-12-09', '1.21.11', 'Mounts of Mayhem',  'https://piston-data.mojang.com/v1/objects/64bb6d763bed0a9f1d632ec347938594144943ed/server.jar'),
 ('2024-06-13', '1.21.0',  'Tricky Trails',     'https://piston-data.mojang.com/v1/objects/450698d1863ab5180c25d7c804ef0fe6369dd1ba/server.jar'),
 ('2024-04-29', '1.20.6',  'Trails & Tales',    'https://piston-data.mojang.com/v1/objects/145ff0858209bcfc164859ba735d4199aafa1eea/server.jar'),
