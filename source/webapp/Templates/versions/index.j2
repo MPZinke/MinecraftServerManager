@@ -43,7 +43,11 @@
 				{% for version in versions %}
 					<tr>
 						<td>
-							{{ version.tag }}
+							<a
+								href="/versions/{{ version.id }}"
+							>
+								{{ version.tag }}
+							</a>
 						</td>
 						<td>
 							{{ version.title }}

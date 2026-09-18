@@ -117,12 +117,12 @@ async def stop_server(container_id: str) -> bool:
 		return (await connection.match(regex, timeout=30.0)) is not None
 
 
-async def teleport_player(container_id: str, player: str, location: Tuple[int, int, int], dimension: str) -> None:
+async def teleport_player(container_id: str, player_uuid: str, location: Tuple[int, int, int], dimension: str) -> None:
 	# EG. `[22:56:10] [Server thread/INFO]: Teleported MPZinke to 2.500000, 88.000000, 11.500000`
 	regex = rf"{LOG_FORMAT_INFO_REGEX}: Teleported MPZinke to .*"
 	async with Attach(container_id) as connection:
 		# FROM: https://minecraft.fandom.com/wiki/Commands/tp
-		await connection.send(f"execute in {dimension} run tp {player} {" ".join(map(str, location))}")
+		await connection.send(f"execute in {dimension} run tp {player_uuid} {" ".join(map(str, location))}")
 		await connection.match(regex, timeout=5.0)
 
 
