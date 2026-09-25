@@ -142,7 +142,7 @@ async def POST_worlds_world_stop(world_id: int):
 	return redirect(f"/worlds/{world_id}")
 
 
-@worlds_world_blueprint.get("/worlds/<int:world_id>/download")
+@worlds_world_blueprint.get("/worlds/<int:world_id>/download/data")
 async def GET_worlds_world_download(world_id: int):
 	world: World = await get_world(world_id)
 
@@ -161,10 +161,13 @@ async def GET_worlds_world_download_json(world_id: int):
 	# FROM: https://stackoverflow.com/a/45111660
 	string_file = StringIO(json.dumps(world_dict, indent=4))
 	file = BytesIO(string_file.getvalue().encode())
-	# file.seek(0)
-	# string_file.close()
 
-	return await send_file(file, as_attachment=True, mimetype="application/json")
+	return await send_file(
+		file,
+		as_attachment=True,
+		attachment_filename=f"{world.name}.json",
+		mimetype="application/json"
+	)
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")

@@ -45,7 +45,7 @@ async def GET_worlds_world_locations(world_id: int):
 	locations_promise: Awaitable[list[Location]] = get_locations_for_world(world)
 	online_players: list[Player] = []
 	if(world.state == "running"):
-		online_players = await get_online_players(world.container_id)
+		online_players = await get_online_players(world.container_id) or []
 	locations: list[Location] = await locations_promise
 	return await render_template(
 		"worlds/world/locations/index.j2",

@@ -1,6 +1,6 @@
 [project]
 name = "MinecraftServerManager"
-version = "0.11.1"
+version = "0.12.0"
 authors = [{name="Mathew Zinke"}]
 description = "A service to automatically save & run Minecraft servers."
 dependencies = [

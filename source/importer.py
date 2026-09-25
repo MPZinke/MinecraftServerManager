@@ -1,13 +1,18 @@
 
 
+import asyncio
+from datetime import datetime
 import json
+from typing import Optional
 
 
 from jsonschema import validate
 from quart.datastructures import FileStorage
 
 
-from database.classes import Version, World
+from database.classes import Biome, Location, Version, World
+from database.queries.biomes import get_biomes
+from database.queries.locations import new_locations
 from database.queries.worlds import new_world
 
 
@@ -106,7 +111,7 @@ schema = {
 				},
 				"dimension": {
 					"type": "string",
-					"enum": ["overworld", "nether", "end"],
+					"enum": ["overworld", "the_nether", "the_end"],
 					"description": "The location's dimension.",
 				},
 				"favorited": {
@@ -124,6 +129,13 @@ schema = {
 		},
 	},
 }
+
+
+def optional_string_to_optional_datetime(optional_string: Optional[str]) -> Optional[datetime]:
+	if(optional_string is None):
+		return None
+
+	return datetime.strptime(optional_string, "%Y-%m-%d %H:%M:%S")
 
 
 async def import_world_data_tar_gz(file: FileStorage, name: str, notes: str, version_id: int) -> World:
@@ -155,18 +167,16 @@ async def import_world_json(file: FileStorage, name: str, notes: str) -> World:
 	world_dict: dict = json.load(file)
 	validate(world_dict, schema)
 
-	print(len(bytes.fromhex(world_dict["data"])))
-
 	world = World(
 		id=0,
-		created=None,
+		created=optional_string_to_optional_datetime(world_dict["created"]),
 		container_id=None,
 		data=bytes.fromhex(world_dict["data"]),
-		last_played=None,
+		last_played=optional_string_to_optional_datetime(world_dict["last_played"]),
 		name=name,
 		notes=notes,
 		port=None,
-		seed=None,
+		seed=world_dict["seed"],
 		state="offline",
 		version=Version(
 			id=world_dict["version"],
@@ -176,4 +186,31 @@ async def import_world_json(file: FileStorage, name: str, notes: str) -> World:
 			url=None,
 		),
 	)
+	biomes_promise = get_biomes()
+	new_world_promise = new_world(world)
+	biomes, _ = await asyncio.gather(biomes_promise, new_world_promise)
+
+	locations: list[Location] = []
+	for location_dict in world_dict["locations"]:
+		if(location_dict["biome"] is None):
+			biome = None
+		else:
+			biome: Biome = next(filter(lambda biome: biome.id == location_dict["biome"], biomes))
+			print(biome)
+
+		location = Location(
+			id=0,
+			title=location_dict["title"],
+			location=location_dict["location"],
+			dimension=location_dict["dimension"],
+			favorited=optional_string_to_optional_datetime(location_dict["favorited"]),
+			world=world,
+			biome=biome,
+			notes=location_dict["notes"],
+		)
+		locations.append(location)
+
+	await new_locations(locations)
+
+	return world
 	# TODO: Insert world, locations

@@ -120,14 +120,20 @@
 			</tr>
 			<tr>
 				<td>
-					Data
+					Download
 				</td>
 				<td>
 					<a
-						href="/worlds/{{ world.id }}/download"
+						href="/worlds/{{ world.id }}/download/json"
+						download="{{ world.name + ".json"}}"
+					>
+						World
+					</a>
+					<a
+						href="/worlds/{{ world.id }}/download/data"
 						download="{{ world.name + "_data.tar.gz"}}"
 					>
-						⤓
+						Binary
 					</a>
 				</td>
 			</tr>
