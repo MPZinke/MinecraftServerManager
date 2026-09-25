@@ -15,7 +15,8 @@ __author__ = "MPZinke"
 
 
 import asyncio
-from io import BytesIO
+from io import BytesIO, StringIO
+import json
 from pathlib import Path
 import shutil
 from typing import Awaitable
@@ -25,7 +26,8 @@ import traceback
 from quart import jsonify, redirect, render_template, request, send_file, Blueprint
 
 
-from database.classes import Player, Version, World
+from database.classes import Location, Player, Version, World
+from database.queries.locations import get_locations_for_world
 from database.queries.players import add_unknown_players, get_players
 from database.queries.versions import get_versions
 from database.queries.worlds import (
@@ -60,7 +62,7 @@ async def GET_worlds_world(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
-	world = await get_world_info(world_id)
+	world: World = await get_world_info(world_id)
 	if(world.state == "offline"):
 		await delete_world(world_id)
 	return redirect("/worlds")
@@ -97,7 +99,7 @@ async def POST_worlds_world_start(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
-	world = await get_world_info(world_id)
+	world: World = await get_world_info(world_id)
 
 	return jsonify(
 		{
@@ -114,7 +116,7 @@ async def GET_worlds_world_state(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
 async def POST_worlds_world_stop(world_id: int):
-	world = await get_world_info(world_id)
+	world: World = await get_world_info(world_id)
 
 	if(world.state == "running"):
 		await set_world_stopping(world)
@@ -142,10 +144,27 @@ async def POST_worlds_world_stop(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download")
 async def GET_worlds_world_download(world_id: int):
-	world = await get_world(world_id)
+	world: World = await get_world(world_id)
 
 	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
+
+
+@worlds_world_blueprint.get("/worlds/<int:world_id>/download/json")
+async def GET_worlds_world_download_json(world_id: int):
+	world: World = await get_world(world_id)
+	locations: list[Location] = await get_locations_for_world(world)
+
+	world_dict = dict(world)
+	world_dict["locations"]: list[dict] = list(map(dict, locations))
+
+	# FROM: https://stackoverflow.com/a/45111660
+	string_file = StringIO(json.dumps(world_dict, indent=4))
+	file = BytesIO(string_file.getvalue().encode())
+	# file.seek(0)
+	# string_file.close()
+
+	return await send_file(file, as_attachment=True, mimetype="application/json")
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")

@@ -13,6 +13,26 @@ CREATE TABLE "Versions"
 );
 
 
+-- ————————————————————————————————————————————————————— BIOMES ————————————————————————————————————————————————————— --
+
+DROP TYPE Dimension CASCADE;
+CREATE TYPE Dimension AS ENUM (
+	'overworld',
+	'the_nether',
+	'the_end'
+);
+
+
+DROP TABLE IF EXISTS "Biomes" CASCADE;
+CREATE TABLE "Biomes"
+(
+	"id" SERIAL NOT NULL PRIMARY KEY,
+	"dimension" Dimension NOT NULL DEFAULT 'overworld',
+	"title" TEXT NOT NULL UNIQUE,
+	"description" TEXT
+);
+
+
 -- ———————————————————————————————————————————————————— PLAYERS  ———————————————————————————————————————————————————— --
 
 DROP TABLE IF EXISTS "Players" CASCADE;
@@ -71,26 +91,6 @@ $$ language plpgsql;
 CREATE TRIGGER DefaultWorldValues
 BEFORE INSERT ON "Worlds"
 FOR EACH ROW EXECUTE PROCEDURE DefaultWorldValues();
-
-
--- ————————————————————————————————————————————————————— BIOMES ————————————————————————————————————————————————————— --
-
-DROP TYPE Dimension CASCADE;
-CREATE TYPE Dimension AS ENUM (
-	'overworld',
-	'the_nether',
-	'the_end'
-);
-
-
-DROP TABLE IF EXISTS "Biomes" CASCADE;
-CREATE TABLE "Biomes"
-(
-	"id" SERIAL NOT NULL PRIMARY KEY,
-	"dimension" Dimension NOT NULL DEFAULT 'overworld',
-	"title" TEXT NOT NULL UNIQUE,
-	"description" TEXT
-);
 
 
 -- ——————————————————————————————————————————————————— LOCATIONS  ——————————————————————————————————————————————————— --

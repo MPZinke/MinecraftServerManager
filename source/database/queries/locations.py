@@ -49,12 +49,16 @@ async def get_location(cursor: psycopg.AsyncCursor, location_id: int) -> list[Lo
 	await cursor.execute(query, (location_id,))
 	location_dict: dict = await cursor.fetchone()
 
-	biome = Biome(
-		id=location_dict["Biomes.id"],
-		dimension=location_dict["Biomes.dimension"],
-		title=location_dict["Biomes.title"],
-		description=location_dict["Biomes.description"],
-	)
+	if(location_dict["Biomes.id"] is None):
+		biome = None
+
+	else:
+		biome = Biome(
+			id=location_dict["Biomes.id"],
+			dimension=location_dict["Biomes.dimension"],
+			title=location_dict["Biomes.title"],
+			description=location_dict["Biomes.description"],
+		)
 
 	return Location.from_dict(world=None, biome=biome, **location_dict,)
 
@@ -77,12 +81,17 @@ async def get_locations_for_world(cursor: psycopg.AsyncCursor, world: World) -> 
 
 	locations: list[Location] = []
 	async for location_dict in cursor:
-		biome = Biome(
-			id=location_dict["Biomes.id"],
-			dimension=location_dict["Biomes.dimension"],
-			title=location_dict["Biomes.title"],
-			description=location_dict["Biomes.description"],
-		)
+
+		if(location_dict["Biomes.id"] is None):
+			biome = None
+
+		else:
+			biome = Biome(
+				id=location_dict["Biomes.id"],
+				dimension=location_dict["Biomes.dimension"],
+				title=location_dict["Biomes.title"],
+				description=location_dict["Biomes.description"],
+			)
 		locations.append(Location.from_dict(world=world, biome=biome, **location_dict))
 	return locations
 

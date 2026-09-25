@@ -14,12 +14,12 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from quart import redirect, render_template, request, Blueprint
+from quart import datastructures, redirect, render_template, request, Blueprint
 
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
-from database.queries.worlds import new_world
+from importer import (import_world_json, import_world_data_tar_gz)
 
 
 worlds_new_blueprint = Blueprint('worlds_new_blueprint', __name__)
@@ -35,26 +35,19 @@ async def GET_worlds_new():
 @worlds_new_blueprint.post("/worlds/new")
 async def POST_worlds_new():
 	form = await request.form
-	data = (await request.files)["file-input"].read()
-	world = World(
-		id=0,
-		created=None,
-		container_id=None,
-		data=data or None,
-		last_played=None,
-		name=form["name-input"],
-		notes=form["notes-input"],
-		port=None,
-		seed=None,
-		state='clean',
-		version=Version(
-			id=int(form["version_id-select"]),
-			released=None,
-			tag=None,
-			title=None,
-			url=None,
-		),
-	)
-	await new_world(world)
+	file: datastructures.FileStorage = (await request.files)["file-input"]
+	name: str = form["name-input"]
+	notes: str = form["notes-input"]
+
+	if(file.filename.endswith(".json")):
+		world: World = await import_world_json(file, name, notes)
+
+	elif(file.filename.endswith(".tar.gz")):
+		version_id: int = int(form["version_id-select"])
+
+		world: World = await import_world_data_tar_gz(file, name, notes, version_id)
+
+	else:
+		... # TODO: Throw an exception
 
 	return redirect(f"/worlds/{world.id}")

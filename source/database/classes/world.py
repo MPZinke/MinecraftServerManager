@@ -47,7 +47,7 @@ class World:
 		container_id: Optional[str],
 		created: datetime,
 		data: bytes,
-		last_played: datetime,
+		last_played: Optional[datetime],
 		name: str,
 		notes: str,
 		port: Optional[int],
@@ -59,7 +59,7 @@ class World:
 		self.container_id: Optional[str] = container_id
 		self.created: datetime = created
 		self.data: bytes = data
-		self.last_played: datetime = last_played
+		self.last_played: Optional[datetime] = last_played
 		self.name: str = name
 		self.notes: str = notes
 		self.port: Optional[int] = port
@@ -85,6 +85,18 @@ class World:
 			state=world_dict["state"],
 			version=world_dict["version"],
 		)
+
+
+	def __iter__(self) -> iter:
+		yield from {
+			"created": self.created.strftime("%Y-%m-%d %H:%M:%S"),
+			"data": self.data.hex(),
+			"last_played": self.last_played.strftime("%Y-%m-%d %H:%M:%S") if(self.last_played is not None) else None,
+			"name": self.name,
+			"notes": self.notes,
+			"seed": self.seed,
+			"version": self.version.id,
+		}.items()
 
 
 	async def read_data(self) -> None:

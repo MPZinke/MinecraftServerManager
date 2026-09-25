@@ -15,7 +15,7 @@ __author__ = "MPZinke"
 
 
 from datetime import datetime
-from typing import Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 
 Biome = TypeVar("Biome")
@@ -32,7 +32,7 @@ class Location:
 		dimension: str,
 		favorited: datetime,
 		world: World,
-		biome: Biome,
+		biome: Optional[Biome],
 		notes: str,
 	):
 		self.id: int = id
@@ -41,7 +41,7 @@ class Location:
 		self.dimension: str = dimension
 		self.favorited: datetime = favorited
 		self.world: World = world
-		self.biome: Biome = biome
+		self.biome: Optional[Biome] = biome
 		self.notes: str = notes
 
 
@@ -57,3 +57,14 @@ class Location:
 			biome=location_dict["biome"],
 			notes=location_dict["notes"],
 		)
+
+
+	def __iter__(self) -> iter:
+		yield from {
+			"title": self.title,
+			"location": self.location,
+			"dimension": self.dimension,
+			"favorited": self.favorited.strftime("%Y-%m-%d %H:%M:%S") if(self.favorited is not None) else None,
+			"biome": self.biome.id if(self.biome is not None) else None,
+			"notes": self.notes,
+		}.items()
