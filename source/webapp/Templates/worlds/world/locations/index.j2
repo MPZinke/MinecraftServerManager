@@ -87,7 +87,12 @@
 								</form>
 							{% endif %}
 						</td>
-						<td>
+						<td
+							ondblclick="editValue(
+								this,
+								`/worlds/{{ world.id }}/locations/{{ location.id }}/title`
+							);"
+						>
 							{{ location.title.title() }}
 						</td>
 						<td>
@@ -148,3 +153,7 @@
 		</table>
 	</body>
 </html>
+
+<script>
+	{% include "worlds/world/locations/index.js" with context %}
+</script>

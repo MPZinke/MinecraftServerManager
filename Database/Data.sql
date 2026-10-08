@@ -1,5 +1,9 @@
 
 
+INSERT INTO "schema_versions" ("version", "notes") VALUES
+(ARRAY[0, 13, 0]::INT[3], 'Adds schema versioning');
+
+
 -- FROM: https://feedback.minecraft.net/hc/en-us/sections/360001186971?page=1#articles
 --  AND: https://minecraft.fandom.com/wiki/Java_Edition_version_history
 INSERT INTO "Versions" ("released", "tag", "title", "url") VALUES

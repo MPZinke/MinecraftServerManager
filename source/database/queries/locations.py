@@ -163,3 +163,9 @@ async def new_locations(cursor: psycopg.AsyncCursor, locations: list[Location]) 
 async def unfavorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
 	query = """UPDATE "Locations" SET "favorited" = NULL WHERE "id" = %s;"""
 	await cursor.execute(query, (location_id,))
+
+
+@connect
+async def update_title(cursor: psycopg.AsyncCursor, location_id: int, title: str) -> dict:
+	query = """UPDATE "Locations" SET "title" = %s WHERE "id" = %s;"""
+	await cursor.execute(query, (title, location_id))

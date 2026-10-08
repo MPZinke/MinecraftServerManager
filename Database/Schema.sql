@@ -1,4 +1,14 @@
 
+
+DROP TABLE IF EXISTS "schema_versions";
+CREATE TABLE "schema_versions"
+(
+	"version" INT[3] NOT NULL UNIQUE,
+	"notes" TEXT NOT NULL,
+	"applied" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- ———————————————————————————————————————————————————— VERSIONS ———————————————————————————————————————————————————— --
 
 DROP TABLE IF EXISTS "Versions" CASCADE;
