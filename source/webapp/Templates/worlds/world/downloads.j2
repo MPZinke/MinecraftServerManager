@@ -1,0 +1,71 @@
+
+{% extends "wrapper.j2" %}
+{% block page %}
+
+	<title>
+		{{ world.name }} Downloads
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/worlds"
+		>
+			Worlds
+		</a>
+		&gt;
+		<a
+			href="/worlds/{{ world.id }}"
+		>
+			{{ world.name }}
+		</a>
+		&gt; Downloads
+	</header>
+
+	<body>
+		<h1>
+			{{ world.name }} Downloads
+		</h1>
+
+		<table>
+			<tbody>
+				<tr>
+					<td>
+						<a
+							href="/worlds/{{ world.id }}/download/json"
+							download="{{ world.name + ".json"}}"
+						>
+							World JSON
+						</a>
+					</td>
+					<td>
+						Includes world data, metadata, and locations
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a
+							href="/worlds/{{ world.id }}/download/data"
+							download="{{ world.name + "_data.tar.gz"}}"
+						>
+							World Data
+						</a>
+					</td>
+					<td>
+						Includes only world data as a compressed tar.gz
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+
+	<script>
+		{% include "edit_value.js" with context %}
+	</script>
+
+{% endblock %}

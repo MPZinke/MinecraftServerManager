@@ -1,0 +1,92 @@
+
+<tr>
+	<td>
+		{% if location.favorited %}
+			<form
+				action="/worlds/{{ world.id }}/locations/{{ location.id }}/unfavorite"
+				method="POST"
+				style="margin: 0px;"
+			>
+				<button
+					onmouseover="this.innerHTML = `&#9734;`;"
+					onmouseout="this.innerHTML = `&#9733;`;"
+				>
+					&#9733;
+				</button>
+			</form>
+		{% else %}
+			<form
+				action="/worlds/{{ world.id }}/locations/{{ location.id }}/favorite"
+				method="POST"
+				style="margin: 0px;"
+			>
+				<button
+					onmouseover="this.innerHTML = `&#9733;`;"
+					onmouseout="this.innerHTML = `&#9734;`;"
+				>
+					&#9734;
+				</button>
+			</form>
+		{% endif %}
+	</td>
+	<td
+		ondblclick="editValue(
+			this,
+			`/worlds/{{ world.id }}/locations/{{ location.id }}/title`
+		);"
+	>
+		{{ location.title.title() }}
+	</td>
+	<td>
+		{{ location.location[0] }}, {{ location.location[1] }}, {{ location.location[2] }}
+	</td>
+	<td>
+		{{ location.dimension.replace("_", " ").title() }}
+	</td>
+	<td>
+		{% if(location.biome is not none) %}
+			{{ location.biome.title.title() }}
+		{% else %}
+			-
+		{% endif %}
+	</td>
+	<td>
+		{{ location.notes }}
+	</td>
+	{% if world.state == "running" %}
+		<td>
+			<form
+				action="/worlds/{{ world.id }}/locations/{{ location.id }}/tp"
+				method="POST"
+				style="margin-bottom: 0px;"
+			>
+				<select
+					name="player-select"
+				>
+					{% for player in online_players %}
+						<option
+							value="{{ player.uuid }}"
+						>
+							{{ player.name }}
+						</option>
+					{% endfor %}
+				</select>
+				<button>
+					Teleport
+				</button>
+			</form>
+		</td>
+	{% endif %}
+	<td>
+		<form
+			action="/worlds/{{ world.id }}/locations/{{ location.id }}/delete"
+			method="POST"
+			onsubmit="return confirm(`Are you sure you want to delete location '{{ location.name }}'?`);"
+			style="margin-bottom: 0px;"
+		>
+			<button>
+				🗑
+			</button>
+		</form>
+	</td>
+</tr>

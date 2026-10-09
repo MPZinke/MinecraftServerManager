@@ -1,4 +1,7 @@
-<html>
+
+{% extends "wrapper.j2" %}
+{% block page %}
+
 	<title>
 		{{ world.name }} Commands
 	</title>
@@ -84,4 +87,5 @@
 			</tbody>
 		</table>
 	</body>
-</html>
+
+{% endblock %}

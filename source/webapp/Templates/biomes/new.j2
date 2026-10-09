@@ -1,4 +1,6 @@
-<html>
+
+{% extends "wrapper.j2" %}
+{% block page %}
 
 	<header>
 		<a
@@ -22,6 +24,7 @@
 			enctype="multipart/form-data"
 		>
 			<table
+				class="alignment-table"
 			>
 				<tbody>
 					<tr>
@@ -79,4 +82,5 @@
 			</button>
 		</form>
 	</body>
-</html>
+
+{% endblock %}

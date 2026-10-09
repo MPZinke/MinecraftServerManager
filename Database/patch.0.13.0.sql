@@ -1,7 +1,6 @@
 
 
-DROP TABLE IF EXISTS "schema_versions";
-CREATE TABLE "schema_versions"
+CREATE TABLE IF NOT EXISTS "schema_versions"
 (
 	"version" INT[3] NOT NULL UNIQUE,
 	"notes" TEXT NOT NULL,
@@ -9,5 +8,14 @@ CREATE TABLE "schema_versions"
 );
 
 
-INSERT INTO "schema_versions" ("version", "notes") VALUES
-(ARRAY[0, 13, 0]::INT[3], 'Adds schema versioning');
+INSERT INTO "schema_versions" ("version", "notes") 
+SELECT "Temp"."version", "Temp"."notes"
+FROM
+(
+	VALUES
+	(ARRAY[0, 13, 0]::INT[3], 'Adds schema versioning')
+) AS "Temp" ("version", "notes")
+WHERE "Temp"."version" NOT IN (
+	SELECT "version"
+	FROM "schema_versions"
+);

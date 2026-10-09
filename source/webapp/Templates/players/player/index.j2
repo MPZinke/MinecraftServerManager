@@ -1,4 +1,7 @@
-<html>
+
+{% extends "wrapper.j2" %}
+{% block page %}
+
 	<title>
 		{{ player.name }}
 	</title>
@@ -52,9 +55,9 @@
 			</tbody>
 		</table>
 	</body>
-</html>
-
 
 <script>
 	{% include "players/player/index.js" with context %}
 </script>
+
+{% endblock %}

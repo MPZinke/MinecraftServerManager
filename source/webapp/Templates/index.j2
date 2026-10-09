@@ -1,4 +1,7 @@
-<html>
+
+{% extends "wrapper.j2" %}
+{% block page %}
+
 	<title>
 		Minecraft Server Manager
 	</title>
@@ -15,7 +18,9 @@
 				+ New World
 			</button>
 		</a>
-		<table>
+		<table
+			class="alignment-table"
+		>
 			<tbody>
 				<tr>
 					<td>
@@ -56,4 +61,5 @@
 			</tbody>
 		</table>
 	</body>
-</html>
+
+{% endblock %}

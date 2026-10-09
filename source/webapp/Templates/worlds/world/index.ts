@@ -2,7 +2,7 @@
 const DELETE_TD = document.getElementById("delete-td")!;
 const LAST_PLAYED_TD = document.getElementById("last_played-td")!;
 const RUN_BUTTON_DIV = document.getElementById("run_button-td")!;
-const RUNNING_CONTAINER_TD = document.getElementById("running_container-td")!;
+const RUNNING_CONTAINER_DIV = document.getElementById("running_container-div")!;
 const STATE_TD = document.getElementById("state-td")!;
 
 
@@ -53,7 +53,7 @@ Only called in a state transition.
 	let response_json = await response.json();
 
 	DELETE_TD.innerHTML = response_json.html.delete_button;
-	RUNNING_CONTAINER_TD.innerHTML = response_json.html.running_container;
+	RUNNING_CONTAINER_DIV.innerHTML = response_json.html.running_container;
 	RUN_BUTTON_DIV.innerHTML = response_json.html.run_button;
 	LAST_PLAYED_TD.innerHTML = response_json.last_played;
 	STATE_TD.innerHTML = response_json.state;
@@ -73,51 +73,6 @@ Only called in a state transition.
 	{
 		clearInterval(GET_ONLINE_PLAYERS_INTERVAL);
 		clearInterval(GET_STATS_INTERVAL);
-	}
-}
-
-
-function edit_value(
-	element: HTMLElement,
-	original_value: string,
-	endpoint: string,
-	original_value_can_be_falsey: boolean=false
-): void
-{
-	// Prevent inputs within inputs
-	if(element.firstElementChild !== null)
-	{
-		return;
-	}
-
-	let input_string: string = `
-		<form
-			action="${endpoint}"
-			method="POST"
-			onsubmit="update_check(event, this, \`${original_value}\`, \`${element.innerHTML}\`);"
-		>
-			<input
-				id="edit_value-input"
-				name="edit_value-input"
-				onchange="this.parentElement.requestSubmit();"
-				onfocusout="this.parentElement.requestSubmit();"
-				value="${(original_value || original_value_can_be_falsey) ? original_value : ``}"
-			/>
-		</form>
-	`;
-	element.innerHTML = input_string;
-
-	document.getElementById("edit_value-input")!.focus();
-}
-
-
-function update_check(event: SubmitEvent, element: HTMLElement, original_value: string, original_HTML: string): void
-{
-	let new_value: string = (element.firstElementChild as HTMLInputElement).value;
-	if(new_value === original_value)
-	{
-		(element.parentElement as HTMLInputElement).innerHTML = original_HTML;
-		event.preventDefault();
 	}
 }
 

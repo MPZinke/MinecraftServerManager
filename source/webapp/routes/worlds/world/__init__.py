@@ -35,6 +35,7 @@ from database.queries.worlds import (
 	get_world,
 	get_world_info,
 	new_world,
+	set_name,
 	set_world_stopping,
 	set_world_running,
 	set_world_seed,
@@ -60,12 +61,26 @@ async def GET_worlds_world(world_id: int):
 	return await render_template("worlds/world/index.j2", world=world)
 
 
+@worlds_world_blueprint.get("/worlds/<int:world_id>/downloads")
+async def GET_worlds_world_downloads(world_id: int):
+	world: World = await get_world_info(world_id)
+	return await render_template("worlds/world/downloads.j2", world=world)
+
+
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
 	world: World = await get_world_info(world_id)
 	if(world.state == "offline"):
 		await delete_world(world_id)
 	return redirect("/worlds")
+
+
+@worlds_world_locations_blueprint.post("/worlds/<int:world_id>/name")
+async def POST_worlds_world_name(world_id: int):
+	form: dict = await request.form
+	name: str = form["edit_value-input"]
+	await set_name(world_id, name)
+	return redirect(f"/worlds/{world_id}")
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/start")
@@ -109,7 +124,7 @@ async def GET_worlds_world_state(world_id: int):
 				"running_container": await render_template("worlds/world/running_container.j2", world=world),
 			},
 			"last_played": world.last_played.strftime("%Y-%m-%d %H:%M:%S") if(world.last_played is not None) else "-",
-			"state": world.state,
+			"state": world.state.title(),
 		}
 	)
 

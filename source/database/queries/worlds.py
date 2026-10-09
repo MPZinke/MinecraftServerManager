@@ -184,6 +184,16 @@ async def new_world(cursor: psycopg.AsyncCursor, world: World) -> None:
 
 
 @connect
+async def set_name(cursor: psycopg.AsyncCursor, id: int, name: str) -> None:
+	query = """
+		UPDATE "Worlds"
+		SET "name" = %s
+		WHERE "id" = %s;
+	"""
+	await cursor.execute(query, (name, id))
+
+
+@connect
 async def set_world_container(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"

@@ -29,8 +29,8 @@ from database.queries.locations import (
 	get_location,
 	get_locations_for_world,
 	new_location,
+	set_title,
 	unfavorite_location,
-	update_title,
 )
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world_info
@@ -119,7 +119,7 @@ async def POST_worlds_world_locations_location_favorite(world_id: int, location_
 async def POST_worlds_world_locations_location_title(world_id: int, location_id: int):
 	form: dict = await request.form
 	title: str = form["edit_value-input"]
-	await update_title(location_id, title)
+	await set_title(location_id, title)
 	return redirect(f"/worlds/{world_id}/locations")
 
 
