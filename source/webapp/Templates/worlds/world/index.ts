@@ -58,18 +58,18 @@ Only called in a state transition.
 	LAST_PLAYED_TD.innerHTML = response_json.last_played;
 	STATE_TD.innerHTML = response_json.state;
 
-	if(response_json.state == "running" || response_json.state == "offline")
+	if(response_json.state == "Running" || response_json.state == "Offline")
 	{
 		clearInterval(UPDATE_STATE_INTERVAL);
 	}
-	if(response_json.state == "running")
+	if(response_json.state == "Running")
 	{
 		GET_ONLINE_PLAYERS_INTERVAL = setInterval(get_online_players, 5000);
 		GET_STATS_INTERVAL = setInterval(get_stats, 5000);
 		get_online_players();
 		get_stats();
 	}
-	if(response_json.state == "offline")
+	if(response_json.state == "Offline")
 	{
 		clearInterval(GET_ONLINE_PLAYERS_INTERVAL);
 		clearInterval(GET_STATS_INTERVAL);
@@ -80,11 +80,11 @@ Only called in a state transition.
 let GET_ONLINE_PLAYERS_INTERVAL: ReturnType<typeof setInterval>;
 let GET_STATS_INTERVAL: ReturnType<typeof setInterval>;
 let UPDATE_STATE_INTERVAL: ReturnType<typeof setInterval>;
-if({{ world.state | tojson }} !== "offline" && {{ world.state | tojson }} !== "running")
+if({{ world.state | tojson }} !== "Offline" && {{ world.state | tojson }} !== "Running")
 {
 	UPDATE_STATE_INTERVAL = setInterval(update_state, 1000);
 }
-else if({{ world.state | tojson }} === "running")
+else if({{ world.state | tojson }} === "Running")
 {
 	get_online_players();
 	get_stats();
