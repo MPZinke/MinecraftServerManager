@@ -171,11 +171,14 @@ async def GET_worlds_world_download_json(world_id: int):
 	locations: list[Location] = await get_locations_for_world(world)
 
 	world_dict = dict(world)
+	logger.debug("Retrieved world_dict.")
 	world_dict["locations"]: list[dict] = list(map(dict, locations))
 
 	# FROM: https://stackoverflow.com/a/45111660
-	string_file = StringIO(json.dumps(world_dict, indent=4))
-	file = BytesIO(string_file.getvalue().encode())
+	json_string: str = json.dumps(world_dict, indent=4)
+	logger.debug("Generated json.")
+	file = BytesIO(json_string.encode())
+	logger.debug("Produced BytesIO file.")
 
 	return await send_file(
 		file,
