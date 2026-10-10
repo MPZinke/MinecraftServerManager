@@ -138,8 +138,7 @@ def optional_string_to_optional_datetime(optional_string: Optional[str]) -> Opti
 	return datetime.strptime(optional_string, "%Y-%m-%d %H:%M:%S")
 
 
-async def import_world_data_tar_gz(file: FileStorage, name: str, notes: str, version_id: int) -> World:
-	data = file.read()
+async def import_world_data_tar_gz(data: bytes, name: str, notes: str, version_id: int) -> World:
 	world = World(
 		id=0,
 		created=None,
@@ -196,7 +195,6 @@ async def import_world_json(file: FileStorage, name: str, notes: str) -> World:
 			biome = None
 		else:
 			biome: Biome = next(filter(lambda biome: biome.id == location_dict["biome"], biomes))
-			print(biome)
 
 		location = Location(
 			id=0,

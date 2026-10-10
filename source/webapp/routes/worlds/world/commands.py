@@ -42,14 +42,11 @@ async def GET_worlds_world_commands(world_id: int):
 @worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/op")
 async def POST_worlds_world_commands_op(world_id: int):
 	form = await request.form
-	player_id: int = int(form["player-select"])
+	player: str = form["player-select"]
 
-	world_promise: Awaitable[World] = get_world_info(world_id)
-	player_promise: Awaitable[Player] = get_player(player_id)
-	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
-
+	world: World = await get_world_info(world_id)
 	if(world.state == "running"):
-		await op_player(world.container_id, player.name)
+		await op_player(world.container_id, player)
 
 	return redirect(f"/worlds/{world_id}/commands")
 

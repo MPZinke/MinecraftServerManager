@@ -39,15 +39,20 @@ async def POST_worlds_new():
 	name: str = form["name-input"]
 	notes: str = form["notes-input"]
 
-	if(file.filename.endswith(".json")):
+	if(file.content_length == 0):
+		data: bytes = bytes.fromhex("1f8b080070e5516902ffedd1310ec2301004c0ab79052f889cc840c56352b8a30ab694e763a541a227529499664fdb6c71a5bde6a1ae35fe2875f79cb7ec7e33a571fade5bffc8d32dae2976d0de755efa649c53e9ff7fd6a5954b00000000000000000070201ff03316c500280000")
+		version_id: int = int(form["version_id-select"])
+		world: World = await import_world_data_tar_gz(data, name, notes, version_id)
+
+	elif(file.filename.endswith(".json")):
 		world: World = await import_world_json(file, name, notes)
 
 	elif(file.filename.endswith(".tar.gz")):
 		version_id: int = int(form["version_id-select"])
 
-		world: World = await import_world_data_tar_gz(file, name, notes, version_id)
+		world: World = await import_world_data_tar_gz(file.read(), name, notes, version_id)
 
 	else:
-		... # TODO: Throw an exception
+		...
 
 	return redirect(f"/worlds/{world.id}")

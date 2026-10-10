@@ -71,7 +71,6 @@ CREATE TABLE "Worlds"
 	"id" SERIAL NOT NULL PRIMARY KEY,
 	"container_id" CHAR(64) DEFAULT NULL,
 	"created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"data" BYTEA DEFAULT NULL,
 	"last_played" TIMESTAMP DEFAULT NULL,
 	"name" VARCHAR(64) NOT NULL UNIQUE,
 	"notes" TEXT NOT NULL DEFAULT '',
@@ -82,25 +81,17 @@ CREATE TABLE "Worlds"
 );
 
 
+DROP TABLE IF EXISTS "WorldsData" CASCADE;
+CREATE TABLE "WorldsData"
+(
+	"id" SERIAL NOT NULL PRIMARY KEY,
+	"data" BYTEA DEFAULT ''::BYTEA,
+	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE
+);
+
+
 CREATE UNIQUE INDEX ON "Worlds"("port")
   WHERE "port" IS NOT NULL;
-
-
--- FROM: https://stackoverflow.com/a/42784814
-CREATE OR REPLACE FUNCTION DefaultWorldValues()
-RETURNS TRIGGER
-AS $$ BEGIN
-	IF NEW."data" IS NULL THEN
-		NEW."data" = '\x1f8b080070e5516902ffedd1310ec2301004c0ab79052f889cc840c56352b8a30ab694e763a541a227529499664fdb6c71a5bde6a1ae35fe2875f79cb7ec7e33a571fade5bffc8d32dae2976d0de755efa649c53e9ff7fd6a5954b00000000000000000070201ff03316c500280000'::BYTEA;
-	END IF;
-
-	RETURN NEW;
-END;
-$$ language plpgsql;
-
-CREATE TRIGGER DefaultWorldValues
-BEFORE INSERT ON "Worlds"
-FOR EACH ROW EXECUTE PROCEDURE DefaultWorldValues();
 
 
 -- ——————————————————————————————————————————————————— LOCATIONS  ——————————————————————————————————————————————————— --

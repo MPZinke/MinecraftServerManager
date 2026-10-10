@@ -14,6 +14,9 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
+from typing import Awaitable
+
+
 import psycopg
 
 
@@ -52,23 +55,26 @@ async def get_world(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 		title=world_dict["Versions.title"],
 		url=world_dict["Versions.url"],
 	)
-	return World.from_dict(version=version, **world_dict)
+
+	query = """
+		SELECT *
+		FROM "WorldsData"
+		WHERE "Worlds.id" = %s
+		ORDER BY "index";
+	"""
+	await cursor.execute(query, (world_id,))
+	data = b""
+	async for world_data_dict in cursor:
+		data += world_data_dict["data"]
+
+	return World.from_dict(data=data, version=version, **world_dict)
 
 
 @connect
 async def get_world_info(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """
 		SELECT
-			"Worlds"."id",
-			"Worlds"."container_id",
-			"Worlds"."created",
-			NULL AS "data",
-			"Worlds"."last_played",
-			"Worlds"."name",
-			"Worlds"."notes",
-			"Worlds"."port",
-			"Worlds"."seed",
-			"Worlds"."state",
+			"Worlds".*,
 			"Versions"."id" AS "Versions.id",
 			"Versions"."released" AS "Versions.released",
 			"Versions"."tag" AS "Versions.tag",
@@ -96,16 +102,7 @@ async def get_world_info(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 async def get_worlds_info(cursor: psycopg.AsyncCursor) -> list[World]:
 	query = """
 		SELECT
-			"Worlds"."id",
-			"Worlds"."container_id",
-			"Worlds"."created",
-			NULL AS "data",
-			"Worlds"."last_played",
-			"Worlds"."name",
-			"Worlds"."notes",
-			"Worlds"."port",
-			"Worlds"."seed",
-			"Worlds"."state",
+			"Worlds".*,
 			"Versions"."id" AS "Versions.id",
 			"Versions"."released" AS "Versions.released",
 			"Versions"."tag" AS "Versions.tag",
@@ -135,16 +132,7 @@ async def get_worlds_info(cursor: psycopg.AsyncCursor) -> list[World]:
 async def get_running_worlds_info(cursor: psycopg.AsyncCursor) -> list[World]:
 	query = """
 		SELECT
-			"Worlds"."id",
-			"Worlds"."container_id",
-			"Worlds"."created",
-			NULL AS "data",
-			"Worlds"."last_played",
-			"Worlds"."name",
-			"Worlds"."notes",
-			"Worlds"."port",
-			"Worlds"."seed",
-			"Worlds"."state",
+			"Worlds".*,
 			"Versions"."id" AS "Versions.id",
 			"Versions"."released" AS "Versions.released",
 			"Versions"."tag" AS "Versions.tag",
@@ -174,13 +162,27 @@ async def get_running_worlds_info(cursor: psycopg.AsyncCursor) -> list[World]:
 @connect
 async def new_world(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
-		INSERT INTO "Worlds" ("name", "data", "notes", "Versions.id") VALUES
-		(%s, %s, %s, %s)
+		INSERT INTO "Worlds" ("name", "notes", "Versions.id") VALUES
+		(%s, %s, %s)
 		RETURNING "id";
 	"""
-	await cursor.execute(query, (world.name, world.data, world.notes, world.version.id))
+	await cursor.execute(query, (world.name, world.notes, world.version.id))
 
 	world.id = (await cursor.fetchone())["id"]
+
+	chunks: list[bytes] = []
+	for x in range(len(world.data) // 512_000_000 + 1):
+		chunks.append(world.data[512_000_000 * x : 512_000_000 * (x + 1)])
+
+	query = """
+		INSERT INTO "WorldsData" ("data", "index", "Worlds.id")
+		SELECT "Temp"."data", "Temp"."index", %s
+		FROM UNNEST(
+			%s::BYTEA[],
+			%s::INT[]
+		) AS "Temp"("data", "index");
+	"""
+	await cursor.execute(query, (world.id, chunks, [x+1 for x in range(len(chunks))]))
 
 
 @connect
@@ -271,10 +273,47 @@ async def set_world_state(cursor: psycopg.AsyncCursor, world: World) -> None:
 async def set_world_offline(cursor: psycopg.AsyncCursor, world: World) -> None:
 	query = """
 		UPDATE "Worlds"
-		SET "container_id" = NULL, "data" = %s, "port" = NULL, "state" = 'offline'
+		SET "container_id" = NULL, "port" = NULL, "state" = 'offline'
 		WHERE "id" = %s;
 	"""
-	await cursor.execute(query, (world.data, world.id))
+	query_promise: Awaitable = cursor.execute(query, (world.id,))
 
 	world.port = None
 	world.state = "offline"
+
+	chunks: list[bytes] = []
+	for x in range(len(world.data) // 512_000_000 + 1):
+		chunks.append(world.data[512_000_000 * x : 512_000_000 * (x + 1)])
+
+	await query_promise
+
+	# FROM: https://stackoverflow.com/a/18799497
+	# ASSUMPTION: The size of a world will never decrease. Therefore we will not worry about emptying world data rows.
+	query = """
+		UPDATE "WorldsData"
+		SET "data" = "Temp"."data"
+		FROM UNNEST(
+			%s::BYTEA[],
+			%s::INT[]
+		) AS "Temp" ("data", "index")
+		WHERE "Worlds.id" = %s
+		  AND "WorldsData"."index" = "Temp"."index"
+		RETURNING "id";
+	"""
+	await cursor.execute(query, (chunks, list(range(1, len(chunks)+1)), world.id))
+	number_of_updated_chunks: int = len([world_data_dict async for world_data_dict in cursor])
+
+	# Insert any chunks that were not preexisting.
+	if(number_of_updated_chunks < len(chunks)):
+		query = """
+			INSERT INTO "WorldsData" ("data", "index", "Worlds.id")
+			SELECT "Temp"."data", "Temp"."index", %s
+			FROM UNNEST(
+				%s::BYTEA[],
+				%s::INT[]
+			) AS "Temp" ("data", "index")
+		"""
+
+		remaining_chunks: list[bytes] = chunks[number_of_updated_chunks:]
+		remaining_indexes: list[int] = list(range(number_of_updated_chunks+1, len(chunks)+1))
+		await cursor.execute(query, (world.id, remaining_chunks, remaining_indexes))
