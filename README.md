@@ -25,3 +25,9 @@ export VERSION='0.0.1'
 docker compose build
 docker compose up
 ```
+
+
+## Future Features
+- Autoupdating
+- Alerts on redirects
+- JS "name/title/etc" already exists

@@ -2,4 +2,63 @@
 {% extends "wrapper.j2" %}
 {% block page %}
 
+	<title>
+		New Player
+	</title>
+
+	<header>
+		<a
+			href="/"
+		>
+			⌂
+		</a>
+		&gt;
+		<a
+			href="/players"
+		>
+			Players
+		</a>
+		&gt; New
+	</header>
+
+	<body>
+
+		<form
+			method="POST"
+		>
+			<table
+				class="alignment-table"
+			>
+				<tbody>
+					<tr>
+						<td>
+							Name
+						</td>
+						<td>
+							<input
+								name="name-input"
+							/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							UUID
+						</td>
+						<td>
+							<input
+								name="uuid-input"
+							/>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<button
+				type="submit"
+			>
+				Add
+			</button>
+		</form>
+	</body>
+
 {% endblock %}

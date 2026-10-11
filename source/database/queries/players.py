@@ -47,7 +47,19 @@ async def get_players(cursor: psycopg.AsyncCursor) -> list[Player]:
 
 
 @connect
-async def add_unknown_players(cursor: psycopg.AsyncCursor, players: list[Player]) -> None:
+async def new_player(cursor: psycopg.AsyncCursor, player: Player) -> None:
+	query = """
+		INSERT INTO "Players" ("name", "uuid")
+		VALUES
+		(%(name)s, %(uuid)s)
+		RETURNING "id";
+	"""
+	await cursor.execute(query, {"name": player.name, "uuid": player.uuid})
+	player.id = (await cursor.fetchone())["id"]
+
+
+@connect
+async def new_players(cursor: psycopg.AsyncCursor, players: list[Player]) -> None:
 	query = """
 		INSERT INTO "Players" ("name", "uuid")
 		SELECT "Player"."name", "Player"."uuid"::UUID

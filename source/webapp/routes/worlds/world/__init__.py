@@ -28,7 +28,7 @@ from quart import jsonify, redirect, render_template, request, send_file, Bluepr
 
 from database.classes import Location, Player, Version, World
 from database.queries.locations import get_locations_for_world
-from database.queries.players import add_unknown_players, get_players
+from database.queries.players import new_players, get_players
 from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
@@ -199,7 +199,7 @@ async def GET_worlds_world_players_online(world_id: int):
 
 	if(online_players is not None):
 		if(len(online_players)):
-			asyncio.create_task(add_unknown_players(online_players))
+			asyncio.create_task(new_players(online_players))
 
 		for online_player in online_players:
 			for player in players:

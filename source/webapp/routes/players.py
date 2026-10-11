@@ -18,11 +18,11 @@ import asyncio
 from typing import Awaitable
 
 
-from quart import render_template, Blueprint
+from quart import redirect, render_template, request, Blueprint
 
 
 from database.classes import Player
-from database.queries.players import get_player, get_players
+from database.queries.players import get_player, get_players, new_player
 from database.queries.worlds import get_running_worlds
 from docker.minecraft import get_online_players, get_player_location
 
@@ -34,6 +34,22 @@ players_blueprint = Blueprint('players_blueprint', __name__)
 async def GET_players():
 	players: list[Player] = await get_players()
 	return await render_template("players/index.j2", players=players)
+
+
+@players_blueprint.get("/players/new")
+async def GET_players_new():
+	return await render_template("players/new.j2")
+
+
+@players_blueprint.post("/players/new")
+async def POST_players_new():
+	form = await request.form
+	name: str = form["name-input"]
+	uuid: str = form["uuid-input"]
+	player = Player(id=0, name=name, uuid=uuid)
+	await new_player(player)
+
+	return redirect(f"/players/{player.id}")
 
 
 @players_blueprint.get("/players/<int:player_id>")
