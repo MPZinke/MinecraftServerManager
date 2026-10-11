@@ -22,13 +22,13 @@ from database.classes import Version
 
 
 @connect
-async def get_version(cursor: psycopg.AsyncCursor, version_id: int) -> Version:
+async def get_version(cursor: psycopg.AsyncCursor, id: int) -> Version:
 	query = """
 		SELECT *
 		FROM "Versions"
-		WHERE "id" = %s;
+		WHERE "id" = %(id)s;
 	"""
-	await cursor.execute(query, (version_id,))
+	await cursor.execute(query, {"id": id})
 
 	version_dict = await cursor.fetchone()
 	return Version.from_dict(**version_dict)
@@ -51,9 +51,12 @@ async def get_versions(cursor: psycopg.AsyncCursor) -> list[Version]:
 async def new_version(cursor: psycopg.AsyncCursor, version: Version) -> None:
 	query = """
 		INSERT INTO "Worlds" ("released", "tag", "title", "url") VALUES
-		(%s, %s, %s, %s)
+		(%(released)s, %(tag)s, %(title)s, %(url)s)
 		RETURNING "id";
 	"""
-	await cursor.execute(query, (version.released, version.tag, version.title, version.url))
+	await cursor.execute(
+		query,
+		{"released": version.released, "tag": version.tag, "title": version.title, "url": version.url}
+	)
 
 	version.id = (await cursor.fetchone())["id"]

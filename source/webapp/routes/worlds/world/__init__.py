@@ -32,8 +32,8 @@ from database.queries.players import add_unknown_players, get_players
 from database.queries.versions import get_versions
 from database.queries.worlds import (
 	delete_world,
+	get_world_data,
 	get_world,
-	get_world_info,
 	new_world,
 	set_name,
 	set_world_stopping,
@@ -57,19 +57,19 @@ worlds_world_blueprint.register_blueprint(worlds_world_locations_blueprint)
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>")
 async def GET_worlds_world(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	return await render_template("worlds/world/index.j2", world=world)
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/downloads")
 async def GET_worlds_world_downloads(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	return await render_template("worlds/world/downloads.j2", world=world)
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	if(world.state == "offline"):
 		await delete_world(world_id)
 	return redirect("/worlds")
@@ -85,7 +85,7 @@ async def POST_worlds_world_name(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/start")
 async def POST_worlds_world_start(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_data(world_id)
 
 	if(world.state == "offline"):
 		await set_world_starting(world)  # Set it before page reload for snappier UI.
@@ -114,7 +114,7 @@ async def POST_worlds_world_start(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 
 	return jsonify(
 		{
@@ -131,7 +131,7 @@ async def GET_worlds_world_state(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
 async def POST_worlds_world_stop(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 
 	if(world.state == "running"):
 		await set_world_stopping(world)
@@ -159,7 +159,7 @@ async def POST_worlds_world_stop(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download/data")
 async def GET_worlds_world_download(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_data(world_id)
 
 	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
@@ -167,18 +167,15 @@ async def GET_worlds_world_download(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download/json")
 async def GET_worlds_world_download_json(world_id: int):
-	world: World = await get_world(world_id)
+	world: World = await get_world_data(world_id)
 	locations: list[Location] = await get_locations_for_world(world)
 
 	world_dict = dict(world)
-	logger.debug("Retrieved world_dict.")
 	world_dict["locations"]: list[dict] = list(map(dict, locations))
 
 	# FROM: https://stackoverflow.com/a/45111660
 	json_string: str = json.dumps(world_dict, indent=4)
-	logger.debug("Generated json.")
 	file = BytesIO(json_string.encode())
-	logger.debug("Produced BytesIO file.")
 
 	return await send_file(
 		file,
@@ -190,7 +187,7 @@ async def GET_worlds_world_download_json(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")
 async def GET_worlds_world_players_online(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 
 	if(world.state != "running"):
 		return {"error": f"World {world_id} is not running."}
@@ -215,7 +212,7 @@ async def GET_worlds_world_players_online(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/stats")
 async def GET_worlds_world_stats(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	container = Container(world)
 	stats: dict = await container.stats()
 	return await render_template("worlds/world/stats.j2", stats=stats)

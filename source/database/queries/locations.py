@@ -22,19 +22,19 @@ from database.classes import Biome, Location, World
 
 
 @connect
-async def delete_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
-	query = """DELETE FROM "Locations" WHERE "id" = %s;"""
-	await cursor.execute(query, (location_id,))
+async def delete_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+	query = """DELETE FROM "Locations" WHERE "id" = %(id)s;"""
+	await cursor.execute(query, {"id": id})
 
 
 @connect
-async def favorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
-	query = """UPDATE "Locations" SET "favorited" = CURRENT_TIMESTAMP WHERE "id" = %s;"""
-	await cursor.execute(query, (location_id,))
+async def favorite_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+	query = """UPDATE "Locations" SET "favorited" = CURRENT_TIMESTAMP WHERE "id" = %(id)s;"""
+	await cursor.execute(query, {"id": id})
 
 
 @connect
-async def get_location(cursor: psycopg.AsyncCursor, location_id: int) -> list[Location]:
+async def get_location(cursor: psycopg.AsyncCursor, id: int) -> list[Location]:
 	query = """
 		SELECT
 			"Locations".*,
@@ -44,9 +44,9 @@ async def get_location(cursor: psycopg.AsyncCursor, location_id: int) -> list[Lo
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
-		WHERE "Locations"."id" = %s;
+		WHERE "Locations"."id" = %(id)s;
 	"""
-	await cursor.execute(query, (location_id,))
+	await cursor.execute(query, {"id": id})
 	location_dict: dict = await cursor.fetchone()
 
 	if(location_dict["Biomes.id"] is None):
@@ -74,14 +74,13 @@ async def get_locations_for_world(cursor: psycopg.AsyncCursor, world: World) -> 
 			"Biomes"."description" AS "Biomes.description"
 		FROM "Locations"
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
-		WHERE "Worlds.id" = %s
+		WHERE "Worlds.id" = %(Worlds.id)s
 		ORDER BY "favorited" ASC NULLS LAST, "title" ASC;
 	"""
-	await cursor.execute(query, (world.id,))
+	await cursor.execute(query, {"Worlds.id": world.id})
 
 	locations: list[Location] = []
 	async for location_dict in cursor:
-
 		if(location_dict["Biomes.id"] is None):
 			biome = None
 
@@ -100,12 +99,19 @@ async def get_locations_for_world(cursor: psycopg.AsyncCursor, world: World) -> 
 async def new_location(cursor: psycopg.AsyncCursor, location: Location) -> None:
 	query = """
 		INSERT INTO "Locations" ("title", "dimension", "location", "Worlds.id", "Biomes.id", "notes") VALUES
-		(%s, %s, %s, %s, %s, %s)
+		(%(title)s, %(dimension)s, %(location)s, %(Worlds.id)s, %(Biomes.id)s, %(notes)s)
 		RETURNING "id";
 	"""
 	await cursor.execute(
 		query,
-		(location.title, location.dimension, location.location, location.world.id, location.biome.id, location.notes),
+		{
+			"title": location.title,
+			"dimension": location.dimension,
+			"location": location.location,
+			"World.id": location.world.id,
+			"Biome.id": location.biome.id,
+			"notes": location.notes,
+		},
 	)
 
 	location.id = (await cursor.fetchone())["id"]
@@ -126,17 +132,17 @@ async def new_locations(cursor: psycopg.AsyncCursor, locations: list[Location]) 
 				"Temp"."location_y",
 				"Temp"."location_z"
 			]::INTEGER[3],
-			%s,
+			%(Worlds.id)s,
 			"Temp"."Biomes.id",
 			"Temp"."notes"
 		FROM UNNEST(
-			%s::TEXT[], -- "title"
-			%s::Dimension[], -- "dimension"
-			%s::INTEGER[], -- "location[0]"
-			%s::INTEGER[], -- "location[1]"
-			%s::INTEGER[], -- "location[2]"
-			%s::INTEGER[], -- "Biomes.id"
-			%s::TEXT[] -- "notes"
+			%(titles)s::TEXT[], -- "title"
+			%(dimensions)s::Dimension[], -- "dimension"
+			%(locations_x)s::INTEGER[], -- "location[0]"
+			%(locations_y)s::INTEGER[], -- "location[1]"
+			%(locations_z)s::INTEGER[], -- "location[2]"
+			%(Biomes.ids)s::INTEGER[], -- "Biomes.id"
+			%(notes)s::TEXT[] -- "notes"
 		) AS "Temp" ("title", "dimension", "location_x", "location_y", "location_z", "Biomes.id", "notes")
 		RETURNING "id";
 	"""
@@ -151,7 +157,16 @@ async def new_locations(cursor: psycopg.AsyncCursor, locations: list[Location]) 
 
 	await cursor.execute(
 		query,
-		(locations[0].world.id, titles, dimensions, locations_x, locations_y, locations_z, biomes, notes)
+		{
+			"Worlds.id": locations[0].world.id,
+			"titles": titles,
+			"dimensions": dimensions,
+			"locations_x": locations_x,
+			"locations_y": locations_y,
+			"locations_z": locations_z,
+			"Biomes.ids": biomes,
+			"notes": notes,
+		}
 	)
 
 	location_ids: list[int] = [row["id"] async for row in cursor]
@@ -160,12 +175,12 @@ async def new_locations(cursor: psycopg.AsyncCursor, locations: list[Location]) 
 
 
 @connect
-async def set_title(cursor: psycopg.AsyncCursor, location_id: int, title: str) -> dict:
-	query = """UPDATE "Locations" SET "title" = %s WHERE "id" = %s;"""
-	await cursor.execute(query, (title, location_id))
+async def set_title(cursor: psycopg.AsyncCursor, id: int, title: str) -> dict:
+	query = """UPDATE "Locations" SET "title" = %(title)s WHERE "id" = %(id)s;"""
+	await cursor.execute(query, {"title": title, "id": id})
 
 
 @connect
-async def unfavorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
-	query = """UPDATE "Locations" SET "favorited" = NULL WHERE "id" = %s;"""
-	await cursor.execute(query, (location_id,))
+async def unfavorite_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+	query = """UPDATE "Locations" SET "favorited" = NULL WHERE "id" = %(id)s;"""
+	await cursor.execute(query, {"id": id})

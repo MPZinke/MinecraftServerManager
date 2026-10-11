@@ -81,11 +81,11 @@ CREATE TABLE "Worlds"
 );
 
 
-DROP TABLE IF EXISTS "WorldsData" CASCADE;
-CREATE TABLE "WorldsData"
+DROP TABLE IF EXISTS "Worlds-DataChunks" CASCADE;
+CREATE TABLE "Worlds-DataChunks"
 (
 	"id" SERIAL NOT NULL PRIMARY KEY,
-	"data" BYTEA DEFAULT ''::BYTEA,
+	"chunk" BYTEA DEFAULT ''::BYTEA,
 	"Worlds.id" INT NOT NULL REFERENCES "Worlds"("id") ON DELETE CASCADE
 );
 

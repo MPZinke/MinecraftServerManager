@@ -2,7 +2,8 @@
 
 INSERT INTO "schema_versions" ("version", "notes") VALUES
 (ARRAY[0, 13, 0]::INT[3], 'Adds schema versioning'),
-(ARRAY[0, 15, 0]::INT[3], 'Adds data splitting');
+(ARRAY[0, 15, 0]::INT[3], 'Adds data splitting'),
+(ARRAY[0, 15, 1]::INT[3], 'Renames WorldsData. Uses key-values for DB query args.');
 
 
 -- FROM: https://feedback.minecraft.net/hc/en-us/sections/360001186971?page=1#articles

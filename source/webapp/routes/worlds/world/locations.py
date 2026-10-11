@@ -33,7 +33,7 @@ from database.queries.locations import (
 	unfavorite_location,
 )
 from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world_info
+from database.queries.worlds import get_world
 from docker.minecraft import get_online_players, get_player_location, teleport_player
 
 
@@ -42,7 +42,7 @@ worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint',
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
 async def GET_worlds_world_locations(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	locations_promise: Awaitable[list[Location]] = get_locations_for_world(world)
 	online_players: list[Player] = []
 	if(world.state == "running"):
@@ -58,7 +58,7 @@ async def GET_worlds_world_locations(world_id: int):
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
 async def GET_worlds_world_locations_new(world_id: int):
-	world_promise: Awaitable[World] = get_world_info(world_id)
+	world_promise: Awaitable[World] = get_world(world_id)
 	biomes_promise: Awaitable[list[Biome]] = get_biomes()
 	players_promise: Awaitable[list[Player]] = get_players()
 	# World, list[Biome], list[Player]
@@ -74,7 +74,7 @@ async def POST_worlds_world_locations_new(world_id: int):
 	biome: Optional[int] = int(form["biome-select"] or "0") or None
 	notes: str = form["notes-textarea"]
 
-	world_promise: Awaitable[World] = get_world_info(world_id)
+	world_promise: Awaitable[World] = get_world(world_id)
 	player_promise: Awaitable[Player] = get_player(player_id)
 	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
 	if(world.state == "running"):
@@ -131,7 +131,7 @@ async def POST_worlds_world_locations_location_unfavorite(world_id: int, locatio
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/tp")
 async def POST_worlds_world_locations_location_tp(world_id: int, location_id: int):
-	world_promise: Awaitable[World] = get_world_info(world_id)
+	world_promise: Awaitable[World] = get_world(world_id)
 	location_promise: Awaitable[Location] = get_location(location_id)
 	world, location = await asyncio.gather(world_promise, location_promise)  # : World, Location
 	form: dict = await request.form

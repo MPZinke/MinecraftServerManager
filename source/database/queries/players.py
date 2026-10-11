@@ -22,13 +22,13 @@ from database.classes import Player
 
 
 @connect
-async def get_player(cursor: psycopg.AsyncCursor, player_id: int) -> Player:
+async def get_player(cursor: psycopg.AsyncCursor, id: int) -> Player:
 	query = """
 		SELECT *
 		FROM "Players"
-		WHERE "id" = %s;
+		WHERE "id" = %(id)s;
 	"""
-	await cursor.execute(query, (player_id,))
+	await cursor.execute(query, {"id": id})
 
 	player_dict: dict = await cursor.fetchone()
 	return Player.from_dict(**player_dict)
@@ -52,8 +52,8 @@ async def add_unknown_players(cursor: psycopg.AsyncCursor, players: list[Player]
 		INSERT INTO "Players" ("name", "uuid")
 		SELECT "Player"."name", "Player"."uuid"::UUID
 		FROM UNNEST(
-			%s::TEXT[],
-			%s::UUID[]
+			%(names)s::TEXT[],
+			%(uuids)s::UUID[]
 		) AS "Player" ("name", "uuid")
 		WHERE "Player"."uuid" NOT IN (
 			SELECT "uuid"
@@ -63,7 +63,7 @@ async def add_unknown_players(cursor: psycopg.AsyncCursor, players: list[Player]
 	"""
 	names: list[str] = [player.name for player in players]
 	uuids: list[str] = [player.uuid for player in players]
-	await cursor.execute(query, (names, uuids))
+	await cursor.execute(query, {"names": names, "uuids": uuids})
 
 	async for row in cursor:
 		player_id: int = row["id"]

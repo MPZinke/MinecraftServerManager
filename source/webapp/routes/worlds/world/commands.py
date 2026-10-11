@@ -23,7 +23,7 @@ from quart import redirect, render_template, request, Blueprint
 
 from database.classes import Player, World
 from database.queries.players import get_player, get_players
-from database.queries.worlds import get_world_info
+from database.queries.worlds import get_world
 from docker.minecraft import op_player, time_set_0
 
 
@@ -32,7 +32,7 @@ worlds_world_commands_blueprint = Blueprint('worlds_world_commands_blueprint', _
 
 @worlds_world_commands_blueprint.get("/worlds/<int:world_id>/commands")
 async def GET_worlds_world_commands(world_id: int):
-	world_promise: Awaitable[World] = get_world_info(world_id)
+	world_promise: Awaitable[World] = get_world(world_id)
 	players_promise: Awaitable[list[Player]] = get_players()
 	world, players = await asyncio.gather(world_promise, players_promise)  # : World, list[Player]
 
@@ -44,7 +44,7 @@ async def POST_worlds_world_commands_op(world_id: int):
 	form = await request.form
 	player: str = form["player-select"]
 
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	if(world.state == "running"):
 		await op_player(world.container_id, player)
 
@@ -53,7 +53,7 @@ async def POST_worlds_world_commands_op(world_id: int):
 
 @worlds_world_commands_blueprint.post("/worlds/<int:world_id>/commands/time_set_0")
 async def POST_worlds_world_commands_time_set_0(world_id: int):
-	world: World = await get_world_info(world_id)
+	world: World = await get_world(world_id)
 	if(world.state == "running"):
 		await time_set_0(world.container_id)
 
