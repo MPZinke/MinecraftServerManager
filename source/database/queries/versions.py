@@ -30,7 +30,7 @@ async def get_version(cursor: psycopg.AsyncCursor, id: int) -> Version:
 	"""
 	await cursor.execute(query, {"id": id})
 
-	version_dict = await cursor.fetchone()
+	version_dict = await cursor.fetchone_or_fail()
 	return Version.from_dict(**version_dict)
 
 

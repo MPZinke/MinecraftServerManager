@@ -18,10 +18,11 @@ import asyncio
 from typing import Awaitable, Optional
 
 
-from quart import redirect, render_template, request, Blueprint
+from quart import redirect, request, session, Blueprint
 
 
 from database.classes import Biome, Location, Player, World
+from database.exceptions import NoResults
 from database.queries.biomes import get_biomes
 from database.queries.locations import (
 	delete_location,
@@ -35,6 +36,7 @@ from database.queries.locations import (
 from database.queries.players import get_player, get_players
 from database.queries.worlds import get_world
 from docker.minecraft import get_online_players, get_player_location, teleport_player
+from webapp.wrappers import render_template
 
 
 worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint', __name__)
@@ -42,7 +44,13 @@ worlds_world_locations_blueprint = Blueprint('worlds_world_locations_blueprint',
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations")
 async def GET_worlds_world_locations(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
 	locations_promise: Awaitable[list[Location]] = get_locations_for_world(world)
 	online_players: list[Player] = []
 	if(world.state == "running"):
@@ -58,11 +66,17 @@ async def GET_worlds_world_locations(world_id: int):
 
 @worlds_world_locations_blueprint.get("/worlds/<int:world_id>/locations/new")
 async def GET_worlds_world_locations_new(world_id: int):
-	world_promise: Awaitable[World] = get_world(world_id)
-	biomes_promise: Awaitable[list[Biome]] = get_biomes()
-	players_promise: Awaitable[list[Player]] = get_players()
-	# World, list[Biome], list[Player]
-	world, biomes, players = await asyncio.gather(world_promise, biomes_promise, players_promise)
+	try:
+		world_promise: Awaitable[World] = get_world(world_id)
+		biomes_promise: Awaitable[list[Biome]] = get_biomes()
+		players_promise: Awaitable[list[Player]] = get_players()
+		# World, list[Biome], list[Player]
+		world, biomes, players = await asyncio.gather(world_promise, biomes_promise, players_promise)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
 	return await render_template("worlds/world/locations/new.j2", biomes=biomes, players=players, world=world)
 
 
@@ -74,31 +88,43 @@ async def POST_worlds_world_locations_new(world_id: int):
 	biome: Optional[int] = int(form["biome-select"] or "0") or None
 	notes: str = form["notes-textarea"]
 
-	world_promise: Awaitable[World] = get_world(world_id)
-	player_promise: Awaitable[Player] = get_player(player_id)
-	world, player = await asyncio.gather(world_promise, player_promise)  # : World, Player
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
+	player: Player = await get_player(player_id)
+
 	if(world.state == "running"):
-		# Optional[str], Optional[Tuple[int, int, int]]
-		dimension, location = await get_player_location(world.container_id, player.name)
-
-		# TODO: If None, None: redirect to error page.
-
-		location = Location(
-			id=0,
-			title=title,
-			dimension=dimension,
-			favorited=None,
-			location=location,
-			notes=notes,
-			world=world,
-			biome=Biome(
-				id=biome,
-				dimension=None,
-				title=None,
-				description=None,
-			),
+		results: tuple[Optional[str], Optional[tuple[int, int, int]]] = await get_player_location(
+			world.container_id,
+			player.name
 		)
-		await new_location(location)
+
+		if(None in results):
+			session["alert"] = f"Failed to get location for player {player.name}."
+
+		else:
+			# Optional[str], Optional[Tuple[int, int, int]]
+			dimension, location = results
+			location = Location(
+				id=0,
+				title=title,
+				dimension=dimension,
+				favorited=None,
+				location=location,
+				notes=notes,
+				world=world,
+				biome=Biome(
+					id=biome,
+					dimension=None,
+					title=None,
+					description=None,
+				),
+			)
+			await new_location(location)
 
 	return redirect(f"/worlds/{world_id}/locations")
 
@@ -131,9 +157,15 @@ async def POST_worlds_world_locations_location_unfavorite(world_id: int, locatio
 
 @worlds_world_locations_blueprint.post("/worlds/<int:world_id>/locations/<int:location_id>/tp")
 async def POST_worlds_world_locations_location_tp(world_id: int, location_id: int):
-	world_promise: Awaitable[World] = get_world(world_id)
-	location_promise: Awaitable[Location] = get_location(location_id)
-	world, location = await asyncio.gather(world_promise, location_promise)  # : World, Location
+	try:
+		world_promise: Awaitable[World] = get_world(world_id)
+		location_promise: Awaitable[Location] = get_location(location_id)
+		world, location = await asyncio.gather(world_promise, location_promise)  # : World, Location
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
 	form: dict = await request.form
 	player_uuid: str = form["player-select"]
 

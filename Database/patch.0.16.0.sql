@@ -1,6 +1,6 @@
 
 
-ALTER TABLE "Players" ADD CONSTRAINT UNIQUE ("uuid");
+ALTER TABLE "Players" ADD CONSTRAINT "Players.uuid-unique" UNIQUE ("uuid");
 
 
 INSERT INTO "schema_versions" ("version", "notes") VALUES

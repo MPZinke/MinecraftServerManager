@@ -30,7 +30,7 @@ async def get_player(cursor: psycopg.AsyncCursor, id: int) -> Player:
 	"""
 	await cursor.execute(query, {"id": id})
 
-	player_dict: dict = await cursor.fetchone()
+	player_dict: dict = await cursor.fetchone_or_fail()
 	return Player.from_dict(**player_dict)
 
 
@@ -55,7 +55,7 @@ async def new_player(cursor: psycopg.AsyncCursor, player: Player) -> None:
 		RETURNING "id";
 	"""
 	await cursor.execute(query, {"name": player.name, "uuid": player.uuid})
-	player.id = (await cursor.fetchone())["id"]
+	player.id = (await cursor.fetchone_or_fail())["id"]
 
 
 @connect

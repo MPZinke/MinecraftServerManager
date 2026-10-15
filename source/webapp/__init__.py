@@ -18,10 +18,11 @@ import asyncio
 from io import BytesIO
 import os
 from pathlib import Path
+import secrets
 import tarfile
 
 
-from quart import Quart
+from quart import session, Quart
 
 
 from webapp.routes import root_blueprint
@@ -34,9 +35,9 @@ STATIC_FOLDER = WEBAPP_DIR / "Static"
 
 
 app = Quart("Minecraft Server Manager", template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
-app.register_blueprint(root_blueprint)
 app.config["MAX_CONTENT_LENGTH"] = 300 * (1024 ** 2)  # _ * MB
-
+app.secret_key = secrets.token_hex(64)
+app.register_blueprint(root_blueprint)
 
 
 @app.before_serving

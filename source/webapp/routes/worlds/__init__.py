@@ -22,7 +22,7 @@ from threading import Thread
 import traceback
 
 
-from quart import jsonify, redirect, render_template, request, send_file, Blueprint
+from quart import Blueprint
 
 
 from database.classes import Version, World
@@ -31,6 +31,7 @@ from database.queries.worlds import get_worlds
 from docker import Container, Image
 from webapp.routes.worlds.world import worlds_world_blueprint
 from webapp.routes.worlds.new import worlds_new_blueprint
+from webapp.wrappers import render_template
 
 
 worlds_blueprint = Blueprint('worlds_blueprint', __name__)

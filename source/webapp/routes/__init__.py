@@ -22,13 +22,14 @@ from threading import Thread
 import traceback
 
 
-from quart import jsonify, redirect, render_template, request, send_file, Blueprint
+from quart import jsonify, redirect, request, send_file, Blueprint
 
 
 from webapp.routes.biomes import biomes_blueprint
 from webapp.routes.players import players_blueprint
 from webapp.routes.versions import versions_blueprint
 from webapp.routes.worlds import worlds_blueprint
+from webapp.wrappers import render_template
 
 
 root_blueprint = Blueprint('root_blueprint', __name__)

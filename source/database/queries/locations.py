@@ -22,19 +22,19 @@ from database.classes import Biome, Location, World
 
 
 @connect
-async def delete_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def delete_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
 	query = """DELETE FROM "Locations" WHERE "id" = %(id)s;"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": location_id})
 
 
 @connect
-async def favorite_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def favorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
 	query = """UPDATE "Locations" SET "favorited" = CURRENT_TIMESTAMP WHERE "id" = %(id)s;"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": location_id})
 
 
 @connect
-async def get_location(cursor: psycopg.AsyncCursor, id: int) -> list[Location]:
+async def get_location(cursor: psycopg.AsyncCursor, location_id: int) -> list[Location]:
 	query = """
 		SELECT
 			"Locations".*,
@@ -46,8 +46,8 @@ async def get_location(cursor: psycopg.AsyncCursor, id: int) -> list[Location]:
 		LEFT JOIN "Biomes" ON "Locations"."Biomes.id" = "Biomes"."id"
 		WHERE "Locations"."id" = %(id)s;
 	"""
-	await cursor.execute(query, {"id": id})
-	location_dict: dict = await cursor.fetchone()
+	await cursor.execute(query, {"id": location_id})
+	location_dict: dict = await cursor.fetchone_or_fail()
 
 	if(location_dict["Biomes.id"] is None):
 		biome = None
@@ -175,12 +175,12 @@ async def new_locations(cursor: psycopg.AsyncCursor, locations: list[Location]) 
 
 
 @connect
-async def set_title(cursor: psycopg.AsyncCursor, id: int, title: str) -> dict:
+async def set_title(cursor: psycopg.AsyncCursor, location_id: int, title: str) -> dict:
 	query = """UPDATE "Locations" SET "title" = %(title)s WHERE "id" = %(id)s;"""
-	await cursor.execute(query, {"title": title, "id": id})
+	await cursor.execute(query, {"title": title, "id": location_id})
 
 
 @connect
-async def unfavorite_location(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def unfavorite_location(cursor: psycopg.AsyncCursor, location_id: int) -> dict:
 	query = """UPDATE "Locations" SET "favorited" = NULL WHERE "id" = %(id)s;"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": location_id})

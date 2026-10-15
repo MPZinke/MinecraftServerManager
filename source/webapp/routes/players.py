@@ -18,13 +18,16 @@ import asyncio
 from typing import Awaitable
 
 
-from quart import redirect, render_template, request, Blueprint
+import psycopg
+from quart import redirect, request, session, Blueprint
 
 
 from database.classes import Player
+from database.exceptions import NoResults
 from database.queries.players import get_player, get_players, new_player
 from database.queries.worlds import get_running_worlds
 from docker.minecraft import get_online_players, get_player_location
+from webapp.wrappers import render_template
 
 
 players_blueprint = Blueprint('players_blueprint', __name__)
@@ -43,19 +46,29 @@ async def GET_players_new():
 
 @players_blueprint.post("/players/new")
 async def POST_players_new():
-	form = await request.form
-	name: str = form["name-input"]
-	uuid: str = form["uuid-input"]
-	player = Player(id=0, name=name, uuid=uuid)
-	await new_player(player)
+	try:
+		form = await request.form
+		name: str = form["name-input"]
+		uuid: str = form["uuid-input"]
+		player = Player(id=0, name=name, uuid=uuid)
+		await new_player(player)
 
-	return redirect(f"/players/{player.id}")
+		return redirect(f"/players/{player.id}")
+
+	except psycopg.errors.UniqueViolation:
+		session["alert"] = f"Player name '{name}' or UUID '{uuid}' already exists."
+		return redirect("/players/new")
 
 
 @players_blueprint.get("/players/<int:player_id>")
 async def GET_players_player(player_id: int):
-	player: Player = await get_player(player_id)
-	return await render_template("players/player/index.j2", player=player)
+	try:
+		player: Player = await get_player(player_id)
+		return await render_template("players/player/index.j2", player=player)
+
+	except NoResults:
+		session["alert"] = f"No player with id {player_id} found."
+		return redirect("/players")
 
 
 @players_blueprint.get("/players/<int:player_id>/world")

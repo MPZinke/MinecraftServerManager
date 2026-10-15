@@ -17,11 +17,14 @@ __author__ = "MPZinke"
 from datetime import datetime
 
 
-from quart import redirect, render_template, request, Blueprint
+import psycopg
+from quart import redirect, request, session, Blueprint
 
 
 from database.classes import Version
 from database.queries.versions import get_version, get_versions, new_version
+from database.exceptions import NoResults
+from webapp.wrappers import render_template
 
 
 versions_blueprint = Blueprint('versions_blueprint', __name__)
@@ -35,8 +38,13 @@ async def GET_versions():
 
 @versions_blueprint.get("/versions/<int:version_id>")
 async def GET_versions_version(version_id: int):
-	version: Version = await get_version(version_id)
-	return await render_template("versions/version.j2", version=version)
+	try:
+		version: Version = await get_version(version_id)
+		return await render_template("versions/version.j2", version=version)
+
+	except NoResults:
+		session["alert"] = f"No version with id {version_id} found"
+		return redirect("/versions")
 
 
 @versions_blueprint.get("/versions/new")
@@ -47,13 +55,18 @@ async def GET_versions_new():
 
 @versions_blueprint.post("/versions/new")
 async def POST_versions_new():
-	version = Version(
-		id=0,
-		released=datetime.strptime("%Y-%m-%d", request.form["released-input"]),
-		tag=request.form["tag-input"],
-		title=request.form["title-input"],
-		url=request.form["url-input"],
-	)
-	await new_version(version)
+	try:
+		version = Version(
+			id=0,
+			released=datetime.strptime("%Y-%m-%d", request.form["released-input"]),
+			tag=request.form["tag-input"],
+			title=request.form["title-input"],
+			url=request.form["url-input"],
+		)
+		await new_version(version)
 
-	return redirect("/versions")
+		return redirect("/versions")
+
+	except psycopg.errors.UniqueViolation:
+		session["alert"] = f"Version tag '{version.tag}' or title '{version.title}' already exists."
+		return redirect("/players/new")

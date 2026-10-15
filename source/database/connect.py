@@ -1,8 +1,35 @@
 
 
 import os
+from typing import Optional
+
+
 import psycopg
 from psycopg.rows import dict_row
+
+
+from database.exceptions import NoResults
+
+
+class Cursor:
+	def __init__(self, cursor: psycopg.AsyncCursor):
+		self.cursor = cursor
+
+
+	def __aiter__(self):
+		return self.cursor.__aiter__()
+
+
+	def __getattr__(self, name):
+		return getattr(self.cursor, name)
+
+
+	async def fetchone_or_fail(self):
+		result: Optional[dict] = await self.fetchone()
+		if(result is None):
+			raise NoResults("No results")
+
+		return result
 
 
 def connect(function: callable) -> callable:
@@ -22,7 +49,6 @@ def connect(function: callable) -> callable:
 		DB_password: str = os.getenv("MINECRAFT_DB_PASSWORD")
 
 		# FROM: https://www.psycopg.org/psycopg3/docs/api/connections.html#the-asyncconnection-class
-
 		connection_string = f"host={DB_host} dbname=Minecraft user={DB_user} password={DB_password}"
 		async with await psycopg.AsyncConnection.connect(
 			connection_string,
@@ -30,6 +56,7 @@ def connect(function: callable) -> callable:
 			row_factory=dict_row
 		) as connection:
 			async with connection.cursor() as cursor:
+				cursor = Cursor(cursor)
 				results: list|dict = await function(cursor, *args, **kwargs)
 				return results
 

@@ -14,12 +14,13 @@ __author__ = "MPZinke"
 ########################################################################################################################
 
 
-from quart import datastructures, redirect, render_template, request, Blueprint
+from quart import datastructures, redirect, request, session, Blueprint
 
 
 from database.classes import Version, World
 from database.queries.versions import get_versions
-from importer import (import_world_json, import_world_data_tar_gz)
+from importer import import_world_json, import_world_data_tar_gz
+from webapp.wrappers import render_template
 
 
 worlds_new_blueprint = Blueprint('worlds_new_blueprint', __name__)
@@ -53,6 +54,7 @@ async def POST_worlds_new():
 		world: World = await import_world_data_tar_gz(file.read(), name, notes, version_id)
 
 	else:
-		...
+		session["alert"] = f"Unknown file type {file.filename!s}"
+		redirect("/worlds/new")
 
 	return redirect(f"/worlds/{world.id}")

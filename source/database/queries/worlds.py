@@ -25,13 +25,13 @@ from database.classes import Version, World
 
 
 @connect
-async def delete_world(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def delete_world(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """DELETE FROM "Worlds" WHERE "id" = %(id)s;"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": world_id})
 
 
 @connect
-async def get_world(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def get_world(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """
 		SELECT
 			"Worlds".*,
@@ -45,9 +45,9 @@ async def get_world(cursor: psycopg.AsyncCursor, id: int) -> dict:
 		WHERE "Worlds"."id" = %(id)s
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": world_id})
 
-	world_dict = await cursor.fetchone()
+	world_dict = await cursor.fetchone_or_fail()
 	version = Version(
 		id=world_dict["Versions.id"],
 		released=world_dict["Versions.released"],
@@ -89,7 +89,7 @@ async def get_worlds(cursor: psycopg.AsyncCursor) -> list[World]:
 
 
 @connect
-async def get_world_data(cursor: psycopg.AsyncCursor, id: int) -> dict:
+async def get_world_data(cursor: psycopg.AsyncCursor, world_id: int) -> dict:
 	query = """
 		SELECT
 			"Worlds".*,
@@ -103,9 +103,9 @@ async def get_world_data(cursor: psycopg.AsyncCursor, id: int) -> dict:
 		WHERE "Worlds"."id" = %(id)s
 		ORDER BY "Worlds"."id" ASC;
 	"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": world_id})
 
-	world_dict = await cursor.fetchone()
+	world_dict = await cursor.fetchone_or_fail()
 	version = Version(
 		id=world_dict["Versions.id"],
 		released=world_dict["Versions.released"],
@@ -120,7 +120,7 @@ async def get_world_data(cursor: psycopg.AsyncCursor, id: int) -> dict:
 		WHERE "Worlds.id" = %(id)s
 		ORDER BY "index";
 	"""
-	await cursor.execute(query, {"id": id})
+	await cursor.execute(query, {"id": world_id})
 	data = b"".join([world_chunk_dict["chunk"] async for world_chunk_dict in cursor])
 
 	return World.from_dict(data=data, version=version, **world_dict)
@@ -184,13 +184,13 @@ async def new_world(cursor: psycopg.AsyncCursor, world: World) -> None:
 
 
 @connect
-async def set_name(cursor: psycopg.AsyncCursor, id: int, name: str) -> None:
+async def set_name(cursor: psycopg.AsyncCursor, world_id: int, name: str) -> None:
 	query = """
 		UPDATE "Worlds"
 		SET "name" = %(name)s
 		WHERE "id" = %(id)s;
 	"""
-	await cursor.execute(query, {"id": id, "name": name})
+	await cursor.execute(query, {"id": world_id, "name": name})
 
 
 @connect

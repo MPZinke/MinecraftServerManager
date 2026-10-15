@@ -23,10 +23,11 @@ from typing import Awaitable
 import traceback
 
 
-from quart import jsonify, redirect, render_template, request, send_file, Blueprint
+from quart import jsonify, redirect, request, send_file, session, Blueprint
 
 
 from database.classes import Location, Player, Version, World
+from database.exceptions import NoResults
 from database.queries.locations import get_locations_for_world
 from database.queries.players import new_players, get_players
 from database.queries.versions import get_versions
@@ -48,6 +49,7 @@ from docker.minecraft import get_online_players, get_seed, stop_server
 from logger import logger
 from webapp.routes.worlds.world.commands import worlds_world_commands_blueprint
 from webapp.routes.worlds.world.locations import worlds_world_locations_blueprint
+from webapp.wrappers import render_template
 
 
 worlds_world_blueprint = Blueprint('worlds_world_blueprint', __name__)
@@ -57,21 +59,40 @@ worlds_world_blueprint.register_blueprint(worlds_world_locations_blueprint)
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>")
 async def GET_worlds_world(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
 	return await render_template("worlds/world/index.j2", world=world)
 
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/downloads")
 async def GET_worlds_world_downloads(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
 	return await render_template("worlds/world/downloads.j2", world=world)
 
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/delete")
 async def POST_worlds_world_delete(world_id: int):
-	world: World = await get_world(world_id)
-	if(world.state == "offline"):
-		await delete_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+
+	else:
+		if(world.state == "offline"):
+			await delete_world(world_id)
+
 	return redirect("/worlds")
 
 
@@ -85,9 +106,17 @@ async def POST_worlds_world_name(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/start")
 async def POST_worlds_world_start(world_id: int):
-	world: World = await get_world_data(world_id)
+	try:
+		world: World = await get_world_data(world_id)
 
-	if(world.state == "offline"):
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
+	if(world.state != "offline"):
+		session["alert"] = f"World is not offline. It is in state {world.state}."
+
+	else:
 		await set_world_starting(world)  # Set it before page reload for snappier UI.
 
 		async def start_world():
@@ -114,7 +143,11 @@ async def POST_worlds_world_start(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/state/json")
 async def GET_worlds_world_state(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		return {"error": f"No world with id {world_id} found."}, 404
 
 	return jsonify(
 		{
@@ -131,9 +164,17 @@ async def GET_worlds_world_state(world_id: int):
 
 @worlds_world_blueprint.post("/worlds/<int:world_id>/stop")
 async def POST_worlds_world_stop(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
 
-	if(world.state == "running"):
+	except NoResults:
+		session["alert"] = f"No world with id {world_id} found."
+		return redirect("/worlds")
+
+	if(world.state != "running"):
+		session["alert"] = f"World is not running. It is in state {world.state}."
+
+	else:
 		await set_world_stopping(world)
 
 		async def stop_world():
@@ -159,7 +200,11 @@ async def POST_worlds_world_stop(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download/data")
 async def GET_worlds_world_download(world_id: int):
-	world: World = await get_world_data(world_id)
+	try:
+		world: World = await get_world_data(world_id)
+
+	except NoResults:
+		return {"error": f"No world with id {world_id} found."}, 404
 
 	file = BytesIO(world.data)
 	return await send_file(file, attachment_filename=f"""{world.name}_data.tar.gz""")
@@ -167,7 +212,12 @@ async def GET_worlds_world_download(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/download/json")
 async def GET_worlds_world_download_json(world_id: int):
-	world: World = await get_world_data(world_id)
+	try:
+		world: World = await get_world_data(world_id)
+
+	except NoResults:
+		return {"error": f"No world with id {world_id} found."}, 404
+
 	locations: list[Location] = await get_locations_for_world(world)
 
 	world_dict = dict(world)
@@ -187,7 +237,11 @@ async def GET_worlds_world_download_json(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/players/online")
 async def GET_worlds_world_players_online(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		return {"error": f"No world with id {world_id} found."}, 404
 
 	if(world.state != "running"):
 		return {"error": f"World {world_id} is not running."}
@@ -212,7 +266,12 @@ async def GET_worlds_world_players_online(world_id: int):
 
 @worlds_world_blueprint.get("/worlds/<int:world_id>/stats")
 async def GET_worlds_world_stats(world_id: int):
-	world: World = await get_world(world_id)
+	try:
+		world: World = await get_world(world_id)
+
+	except NoResults:
+		return {"error": f"No world with id {world_id} found."}, 404
+
 	container = Container(world)
 	stats: dict = await container.stats()
 	return await render_template("worlds/world/stats.j2", stats=stats)
